@@ -1,8 +1,10 @@
-// Alert entity
-use crate::entities::severity::Severity;
+//! Entities related to alerts
 
 #[derive(Debug)]
 pub struct Alert {
     pub title: String,
-    pub severity: Severity,
+    pub severity: Option<Severity>,
 }
+
+#[derive(Debug)]
+pub struct Severity {}

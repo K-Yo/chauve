@@ -1,6 +1,8 @@
 //! Chauve, a notification system.
 mod entities;
-mod use_cases;
+mod external_interfaces;
+mod provider;
+mod providers;
 // use crate::entities::alert_providers::AlertProvider;
 // use crate::use_cases::pull_alerts::PullAlerts;
 use crate::entities::settings::Settings;
