@@ -7,7 +7,7 @@ pub struct Settings {
 #[derive(Default, serde::Deserialize, Clone, Debug)]
 pub struct ProvidersSettings {
     #[serde(default)]
-    grafana: Vec<ProviderGrafanaSetting>,
+    pub grafana: Vec<ProviderGrafanaSetting>,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]
