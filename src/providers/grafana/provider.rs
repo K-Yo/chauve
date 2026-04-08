@@ -1,5 +1,5 @@
 use super::alert::GrafanaAlert;
-use crate::entities::{alert::Alert, provider::{Provider, convert_alert}};
+use crate::entities::{alert::Alert, provider::{Provider, ProviderError, convert_alert}};
 use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
@@ -19,9 +19,9 @@ impl GrafanaProvider {
 
 #[async_trait]
 impl Provider for GrafanaProvider {
-    async fn alerts(&self) -> Vec<Alert> {
-        let provider_alerts = self.pull().await;
-        provider_alerts.iter().map(convert_alert).collect()
+    async fn alerts(&self) -> Result<Vec<Alert>, ProviderError> {
+        let generic_alerts = self.pull().await?.iter().map(convert_alert).collect::<Vec<Alert>>();
+        Ok(generic_alerts)
     }
     fn clone_box(&self) -> Box<dyn Provider> {
         Box::new(self.clone())
@@ -29,19 +29,18 @@ impl Provider for GrafanaProvider {
 }
 
 impl GrafanaProvider {
-    async fn pull(&self) -> Vec<GrafanaAlert> {
+    async fn pull(&self) -> Result<Vec<GrafanaAlert>, ProviderError> {
         let client = reqwest::Client::new();
         let url = format!("{}/api/alertmanager/grafana/api/v2/alerts", self._url);
-        let result = client
+        let response = client
             .get(url)
             .bearer_auth(self._token.clone())
             .send()
-            .await;
-        let response = match result {
-            Ok(r) => r.json::<Vec<GrafanaAlert>>().await.unwrap(),
-            // TODO: do not ignore error.
-            Err(_) => vec![]
-        };
-        response
+            .await?
+            .json::<Vec<GrafanaAlert>>()
+            .await?;
+
+        
+        Ok(response)
     }
 }

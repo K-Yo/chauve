@@ -18,21 +18,32 @@ pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
     Alert {
         title: provider_alert.title().unwrap_or_default(),
         severity: provider_alert.severity().unwrap_or_default(),
-        link: provider_alert.link().unwrap_or_default()
+        link: provider_alert.link().unwrap_or_default(),
     }
 }
 
 /// A provider
+///
+/// Can be grafana, prometheus, or any other system that can provide alerts.
 #[async_trait]
 pub trait Provider {
-
     /// Retrieve normalized alerts from the provider.
-    async fn alerts(&self) -> Vec<Alert>;
+    async fn alerts(&self) -> Result<Vec<Alert>, ProviderError>;
 
     // needed to make it clonable in a box
     fn clone_box(&self) -> Box<dyn Provider>;
 }
 
+// Define a custom error type (optional, but recommended)
+#[derive(Debug, thiserror::Error)]
+pub enum ProviderError {
+    #[error("network error: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("configuration error: {0}")]
+    Config(String),
+    #[error("unknown provider error: {0}")]
+    Anyhow(#[from] anyhow::Error),
+}
 
 impl Clone for Box<dyn Provider> {
     fn clone(&self) -> Self {

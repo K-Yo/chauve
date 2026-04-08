@@ -10,12 +10,14 @@ use dioxus_free_icons::Icon;
 
 #[component]
 fn GitlabIcon() -> Element {
-    rsx!(Icon {
-        width: None,
-        height: None,
-        icon: FaGitlab,
-        style: "height: 1em"
-    })
+    rsx!(
+        Icon {
+            width: None,
+            height: None,
+            icon: FaGitlab,
+            style: "height: 1em",
+        }
+    )
 }
 
 
@@ -23,30 +25,38 @@ fn GitlabIcon() -> Element {
 fn SeverityIcon(severity: Severity) -> Element {
     let str_severity = severity.machinename.as_str();
     match str_severity {
-        "critical" => rsx!(Icon {
-            width: None,
-            height: None,
-            icon: FaCloudBolt,
-            style: "height: 1em"
-        }),
-        "high" => rsx!(Icon {
-            width: None,
-            height: None,
-            icon: FaCloudShowersHeavy,
-            style: "height: 1em"
-        }),
-        "medium" => rsx!(Icon {
-            width: None,
-            height: None,
-            icon: FaCloudRain,
-            style: "height: 1em"
-        }),
-        _ => rsx!(Icon {
-            width: None,
-            height: None,
-            icon: FaCloud,
-            style: "height: 1em"
-        }),
+        "critical" => rsx!(
+            Icon {
+                width: None,
+                height: None,
+                icon: FaCloudBolt,
+                style: "height: 1em",
+            }
+        ),
+        "high" => rsx!(
+            Icon {
+                width: None,
+                height: None,
+                icon: FaCloudShowersHeavy,
+                style: "height: 1em",
+            }
+        ),
+        "medium" => rsx!(
+            Icon {
+                width: None,
+                height: None,
+                icon: FaCloudRain,
+                style: "height: 1em",
+            }
+        ),
+        _ => rsx!(
+            Icon {
+                width: None,
+                height: None,
+                icon: FaCloud,
+                style: "height: 1em",
+            }
+        ),
     }
 }
 
@@ -58,15 +68,9 @@ pub fn AlertComponent(alert: Alert) -> Element {
             td {
                 SeverityIcon { severity: alert.severity }
             }
+            td { "{alert.title}" }
             td {
-            "{alert.title}"
-            }
-            td {
-                a {
-                    href: alert.link,
-                    target: "_blank",
-                    GitlabIcon {  }
-                }
+                a { href: alert.link, target: "_blank", GitlabIcon {} }
             }
         }
     }
