@@ -1,7 +1,5 @@
 use super::alert::AlertList;
-use crate::poller::PollStats;
 use crate::poller::Poller;
-use crate::poller::PollerData;
 use crate::settings::get_settings;
 use crate::ui::header::Header;
 use dioxus::prelude::*;
@@ -11,31 +9,35 @@ use tokio::time::interval;
 // const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
-
 #[component]
 pub fn AlertsApp() -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
-    let mut fetcher: Resource<Result<PollerData, PollStats>> =
-        use_resource(move || async move {
-            let poller = poller_signal.read(); // immutable borrow only — safe!
-            let fetched_data = poller.poll_once().await?;
-
-            // Only now: acquire write lock briefly to update
-            drop(poller); // explicit: drop read
-
-            let mut write_poller = poller_signal.write();
-            write_poller.update_with(fetched_data.clone());
-            Ok(fetched_data)
-        });
 
     // poll regularly
 
     use_coroutine::<(), _, _>(move |_| async move {
-        let mut ticker = interval(Duration::from_secs(5));
+        // Get settings to determine poll frequency
+        let settings = get_settings();
+        debug!("{:#?}",settings);
+        let poll_duration = Duration::from_secs(settings.poll_frequency);
+        let mut ticker = interval(poll_duration);
 
         loop {
             ticker.tick().await;
-            fetcher.restart();
+
+            // Clone signal to move into async
+            let poller = poller_signal.read().clone();
+            match poller.poll_once().await {
+                Ok(data) => {
+                    // Update state
+                    let mut write_poller = poller_signal.write();
+                    write_poller.update_with(data);
+                }
+                Err(stats) => {
+                    // Optionally log or store error
+                    tracing::warn!("Poll failed: {}", stats);
+                }
+            }
         }
     });
 
@@ -47,7 +49,16 @@ pub fn AlertsApp() -> Element {
 
         div { class: "flex justify-center",
             button {
-                onclick: move |_| fetcher.restart(),
+                onclick: move |_| {
+                    // Same logic as above
+                    let poller = poller_signal.read().clone();
+                    spawn(async move {
+                        if let Ok(data) = poller.poll_once().await {
+                            let mut write_poller = poller_signal.write();
+                            write_poller.update_with(data);
+                        }
+                    });
+                },
                 id: "update",
                 class: "bg-orange-500 hover:bg-orange-700 text-black py-2 px-4 rounded",
                 "Update!"

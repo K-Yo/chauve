@@ -1,3 +1,6 @@
+# Poll frequency in seconds (default is 5 seconds)
+poll_frequency = 1
+
 [[providers.grafana]]
 url="http://localhost:3000"
-token="glsa_WZhKCbzVDPAK6Foezy17b1wgLEpr8gpb_3c471423"
+token="glsa_xIhNXu79Fwxg4yVkRe2TmFtHdm0nRCgo_ddf33287"

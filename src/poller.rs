@@ -163,6 +163,16 @@ mod tests {
     };
     use tokio;
 
+    impl Poller {
+        /// poll function used in tests to get alerts in a single call
+        pub async fn poll(&mut self) -> Result<Vec<Alert>, PollStats> {
+            let result = self.poll_once().await?;
+            let alerts = result.alerts.clone();
+            self.update_with(result);
+            Ok(alerts)
+        }
+    }
+
     // Mock provider for testing
     struct MockProvider {
         id: u8,
