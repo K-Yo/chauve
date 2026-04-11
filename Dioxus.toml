@@ -1,4 +1,6 @@
 [application]
+name = "chauve"
+default_platform = "desktop"
 asset_dir = "assets"
 
 [web.app]
@@ -20,3 +22,7 @@ script = []
 # Javascript code file
 # serve: [dev-server] only
 script = []
+
+
+[desktop.bundle]
+identifier = "com.github.k-yo.chauve"
