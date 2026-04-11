@@ -47,6 +47,18 @@ impl ProviderAlert for GrafanaAlert {
     fn link(&self) -> Option<String> {
         self.generator_url.clone()
     }
+
+    fn description(&self) -> Option<String> {
+        self.annotations.clone()?
+        .get("description")
+        .cloned()
+    }
+
+    fn summary(&self) -> Option<String> {
+        self.annotations.clone()?
+        .get("summary")
+        .cloned()
+    }
 }
 
 #[derive(Debug, Deserialize)]

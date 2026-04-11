@@ -208,11 +208,15 @@ mod tests {
                         title: format!("Alert from provider {} - 1", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert1", self.id),
+                        description: "".to_string(),
+                        summary: "".to_string(),
                     },
                     Alert {
                         title: format!("Alert from provider {} - 2", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert2", self.id),
+                        description: "".to_string(),
+                        summary: "".to_string(),
                     },
                 ])
             }

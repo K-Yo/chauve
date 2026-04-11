@@ -4,6 +4,8 @@
 pub struct Alert {
     pub title: String,
     pub severity: Severity,
+    pub description: String,
+    pub summary: String,
     pub link: String,
 }
 

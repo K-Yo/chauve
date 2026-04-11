@@ -8,7 +8,7 @@ use tokio::time::interval;
 
 // const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
-const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
+
 #[component]
 pub fn AlertsApp() -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
@@ -42,7 +42,6 @@ pub fn AlertsApp() -> Element {
     });
 
     rsx! {
-        document::Stylesheet { href: TAILWIND_CSS }
         document::Stylesheet { href: MAIN_CSS }
         Header {}
         AlertList {}

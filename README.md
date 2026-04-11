@@ -10,11 +10,15 @@ An alert notification system for monitoring and visualizing alerts from various 
    ```bash
    cargo install dioxus-cli
    ```
-4. Start the development server:
+4. Start the development app:
    ```bash
-   dx serve --init-db
+   dx serve --desktop
    ```
-5. Open your browser to `http://localhost:8080`
+5. in another shell, sync tailwind css
+   ```bash
+   npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --watch
+   ```
+
 
 ## Configuration
 
