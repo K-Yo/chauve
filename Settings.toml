@@ -1,5 +1,5 @@
 # Poll frequency in seconds (default is 5 seconds)
-poll_frequency = 1
+poll_frequency = 100
 
 [[providers.grafana]]
 url="http://localhost:3000"

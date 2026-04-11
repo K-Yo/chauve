@@ -2,13 +2,13 @@ use crate::entities::alert::{Alert, Severity};
 use crate::poller::Poller;
 use dioxus::prelude::*;
 
-use dioxus_free_icons::icons::fa_solid_icons::{
-    FaCloud, FaCloudBolt, FaCloudRain, FaCloudShowersHeavy, FaMagnifyingGlass
-};
 use dioxus_free_icons::Icon;
+use dioxus_free_icons::icons::fa_solid_icons::{
+    FaCloud, FaCloudBolt, FaCloudRain, FaCloudShowersHeavy, FaMagnifyingGlass,
+};
 
 #[component]
-fn GitlabIcon() -> Element {
+fn LinkIcon() -> Element {
     rsx!(
         Icon {
             width: None,
@@ -30,74 +30,65 @@ fn severity_priority(severity: &Severity) -> i32 {
 }
 
 #[component]
-fn SeverityIcon(severity: Severity) -> Element {
-    let str_severity = severity.machinename.as_str();
-    match str_severity {
-        "critical" => rsx!(
-            Icon {
-                width: None,
-                height: None,
-                icon: FaCloudBolt,
-                style: "height: 1em",
-            }
-        ),
-        "high" => rsx!(
-            Icon {
-                width: None,
-                height: None,
-                icon: FaCloudShowersHeavy,
-                style: "height: 1em",
-            }
-        ),
-        "medium" => rsx!(
-            Icon {
-                width: None,
-                height: None,
-                icon: FaCloudRain,
-                style: "height: 1em",
-            }
-        ),
-        _ => rsx!(
-            Icon {
-                width: None,
-                height: None,
-                icon: FaCloud,
-                style: "height: 1em",
-            }
-        ),
-    }
-}
-
-#[component]
-pub fn AlertComponent(alert: Alert) -> Element {
+pub fn AlertComponent(
+    alert: Alert,
+    is_pinned: bool,
+    on_click: EventHandler<String>,
+    on_mouse_enter: EventHandler<String>,
+    on_mouse_leave: EventHandler<String>,
+) -> Element {
+    let id=alert.id.clone();
+    // TODO: inset does not work
+    let pinned_style = if is_pinned {"inset-shadow-xl/90"} else {""};
     let severity_class = format!("severity-{}", alert.severity.machinename);
     rsx! {
-        tr { class: "alert {severity_class}",
+        tr {
+            class: "alert {severity_class} {pinned_style}",
+            onclick: {
+                let id = id.clone();
+                move |_| on_click.call(id.clone())
+            },
+            onmouseenter: {
+                let id = id.clone();
+                move |_| on_mouse_enter.call(id.clone())
+            },
+            onmouseleave: {
+                let id = id.clone();
+                move |_| on_mouse_leave.call(id.clone())
+            },
             td { class: "p-1",
-                SeverityIcon { severity: alert.severity }
+                a { href: alert.link, target: "_blank", LinkIcon {} }
             }
             td { class: "p-1", "{alert.title}" }
-            td { class: "p-1", "{alert.summary}" }
-            td { class: "p-1",
-                a { href: alert.link, target: "_blank", GitlabIcon {} }
-            }
+            td { class: "p-1 truncate", "{alert.summary}" }
+        
         }
     }
 }
 
 #[component]
-pub fn AlertList() -> Element {
-    let alerts = consume_context::<Signal<Poller>>().read().alerts();
-
+pub fn AlertList(
+    alerts: Vec<Alert>,
+    pinned_id: Option<String>,
+    on_click: EventHandler<String>,
+    on_mouse_enter: EventHandler<String>,
+    on_mouse_leave: EventHandler<String>,
+) -> Element {
     // Sort alerts by severity, with critical first
     let mut sorted_alerts = alerts.clone();
     sorted_alerts.sort_by_key(|alert| severity_priority(&alert.severity));
 
     rsx! {
-        div { class: "overflow-x-auto",
-            table { class: "table-auto w-full",
+        div { class: "overflow-x-scroll overflow-y-scroll pt-12",
+            table { class: "border-separate border-spacing-0 table-auto w-full",
                 for alert in sorted_alerts {
-                    AlertComponent { alert }
+                    AlertComponent {
+                        alert: alert.clone(),
+                        is_pinned: pinned_id == Some(alert.id),
+                        on_click,
+                        on_mouse_enter,
+                        on_mouse_leave,
+                    }
                 }
             }
         }

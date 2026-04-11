@@ -30,6 +30,9 @@ pub struct GrafanaAlert {
 }
 
 impl ProviderAlert for GrafanaAlert {
+    fn id(&self) -> String {
+        self.fingerprint.clone()
+    }
     fn severity(&self) -> Option<Severity> {
         let Some(severity_str) = self.labels.get("severity") else {
             return None;

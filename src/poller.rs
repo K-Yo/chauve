@@ -205,6 +205,7 @@ mod tests {
                 // Return some test alerts
                 Ok(vec![
                     Alert {
+                        id: format!("1"),
                         title: format!("Alert from provider {} - 1", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert1", self.id),
@@ -212,6 +213,7 @@ mod tests {
                         summary: "".to_string(),
                     },
                     Alert {
+                        id: format!("2"),
                         title: format!("Alert from provider {} - 2", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert2", self.id),

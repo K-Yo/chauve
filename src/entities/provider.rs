@@ -3,6 +3,9 @@ use async_trait::async_trait;
 
 /// An alert for a provider
 pub trait ProviderAlert {
+    fn id(&self) -> String {
+        "".into()
+    }
     fn title(&self) -> Option<String> {
         None
     }
@@ -22,6 +25,8 @@ pub trait ProviderAlert {
 
 pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
     Alert {
+        id: provider_alert.id(),
+
         title: provider_alert.title().unwrap_or_default(),
         severity: provider_alert.severity().unwrap_or_default(),
         link: provider_alert.link().unwrap_or_default(),
