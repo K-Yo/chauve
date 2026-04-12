@@ -74,8 +74,8 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Cache node-modules
-        uses: auguwu/node-pm-cache@master
+      - name: Install and cache node-modules
+        uses: bahmutov/npm-install@v1
 
       - name: Build Tailwind CSS (Linux and MacOS)
         if: matrix.os != 'windows-latest'
