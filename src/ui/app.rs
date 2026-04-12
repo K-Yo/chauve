@@ -1,7 +1,5 @@
 use super::alert::AlertList;
-use crate::poller::PollStats;
 use crate::poller::Poller;
-use crate::poller::PollerData;
 use crate::settings::get_settings;
 use crate::ui::header::Header;
 use dioxus::prelude::*;
@@ -10,48 +8,74 @@ use tokio::time::interval;
 
 // const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
-const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 
 #[component]
 pub fn AlertsApp() -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
-    let mut fetcher: Resource<Result<PollerData, PollStats>> =
-        use_resource(move || async move {
-            let poller = poller_signal.read(); // immutable borrow only — safe!
-            let fetched_data = poller.poll_once().await?;
-
-            // Only now: acquire write lock briefly to update
-            drop(poller); // explicit: drop read
-
-            let mut write_poller = poller_signal.write();
-            write_poller.update_with(fetched_data.clone());
-            Ok(fetched_data)
-        });
-
     // poll regularly
 
     use_coroutine::<(), _, _>(move |_| async move {
-        let mut ticker = interval(Duration::from_secs(5));
+        // Get settings to determine poll frequency
+        let settings = get_settings();
+        debug!("{:#?}", settings);
+        let poll_duration = Duration::from_secs(settings.poll_frequency);
+        let mut ticker = interval(poll_duration);
 
         loop {
             ticker.tick().await;
-            fetcher.restart();
+
+            // Clone signal to move into async
+            let poller = poller_signal.read().clone();
+            match poller.poll_once().await {
+                Ok(data) => {
+                    // Update state
+                    let mut write_poller = poller_signal.write();
+                    write_poller.update_with(data);
+                }
+                Err(stats) => {
+                    // Optionally log or store error
+                    tracing::warn!("Poll failed: {}", stats);
+                }
+            }
         }
     });
 
-    rsx! {
-        document::Stylesheet { href: TAILWIND_CSS }
-        document::Stylesheet { href: MAIN_CSS }
-        Header {}
-        AlertList {}
+    // Alert selection
+    // pinned_id is Some when an alert is expplicitely clicked
+    let mut pinned_id: Signal<Option<String>> = use_signal(|| None);
+    // hovered_id is Some when an alert is hovered
+    let mut hovered_id: Signal<Option<String>> = use_signal(|| None);
+    let alerts: Vec<crate::entities::alert::Alert> = poller_signal.read().clone().alerts();
+    let last_poll_time = poller_signal.read().clone().last_poll_time();
 
-        div { class: "flex justify-center",
-            button {
-                onclick: move |_| fetcher.restart(),
-                id: "update",
-                class: "bg-orange-500 hover:bg-orange-700 text-black py-2 px-4 rounded",
-                "Update!"
+    let active_alert = {
+        let pid = pinned_id();
+        let hid = hovered_id();
+        let id = pid.or(hid);
+
+        id.and_then(|id| alerts.iter().find(|a| a.id == id).cloned())
+    };
+
+    rsx! {
+        document::Stylesheet { href: MAIN_CSS }
+        div { class: "h-screen relative",
+            Header {
+                active_alert,
+                is_pinned: pinned_id().is_some(),
+                last_poll_time,
+                unpin: move |_| pinned_id.set(None),
             }
+            AlertList {
+                alerts,
+                pinned_id: pinned_id(),
+                on_click: move |id: String| {
+                    pinned_id.set(if pinned_id() == Some(id.clone()) { None } else { Some(id) });
+                },
+                on_mouse_enter: move |id: String| hovered_id.set(Some(id)),
+                on_mouse_leave: move |_| hovered_id.set(None),
+            
+            }
+        
         }
     }
 }

@@ -2,8 +2,11 @@
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alert {
+    pub id: String,
     pub title: String,
     pub severity: Severity,
+    pub description: String,
+    pub summary: String,
     pub link: String,
 }
 

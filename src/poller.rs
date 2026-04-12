@@ -163,6 +163,16 @@ mod tests {
     };
     use tokio;
 
+    impl Poller {
+        /// poll function used in tests to get alerts in a single call
+        pub async fn poll(&mut self) -> Result<Vec<Alert>, PollStats> {
+            let result = self.poll_once().await?;
+            let alerts = result.alerts.clone();
+            self.update_with(result);
+            Ok(alerts)
+        }
+    }
+
     // Mock provider for testing
     struct MockProvider {
         id: u8,
@@ -195,14 +205,20 @@ mod tests {
                 // Return some test alerts
                 Ok(vec![
                     Alert {
+                        id: format!("1"),
                         title: format!("Alert from provider {} - 1", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert1", self.id),
+                        description: "".to_string(),
+                        summary: "".to_string(),
                     },
                     Alert {
+                        id: format!("2"),
                         title: format!("Alert from provider {} - 2", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
                         link: format!("http://provider{}/alert2", self.id),
+                        description: "".to_string(),
+                        summary: "".to_string(),
                     },
                 ])
             }
