@@ -25,7 +25,7 @@ jobs:
             artifact_name: chauve.exe
             asset_name: chauve-windows-amd64.exe
           - os: macos-latest
-            artifact_name: chauve
+            artifact_name: Chauve.app
             asset_name: chauve-macos-amd64
 
     steps:
@@ -60,20 +60,36 @@ jobs:
       - name: Install Dioxus CLI
         run: cargo install dioxus-cli --locked
 
+      # ── Code quality checks ─────────────────────────────────────────
+      - name: Run cargo check
+        run: cargo check --verbose --features desktop
+
+      - name: Run cargo test
+        run: cargo test --verbose --features desktop
+
       # ── Node + Tailwind CSS ─────────────────────────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 'latest'
 
-      - name: Install Tailwind CSS
-        run: npm install -g tailwindcss
+      - name: Cache node-modules
+        uses: auguwu/node-pm-cache@master
 
-      - name: Build Tailwind CSS
+      - name: Build Tailwind CSS (Linux and MacOS)
+        if: matrix.os != 'windows-latest'
         run: |
           npx @tailwindcss/cli \
             -i ./assets/source.css \
             -o ./assets/main.css \
+            --minify
+
+      - name: Build Tailwind CSS (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          npx @tailwindcss/cli \
+            -i .\assets\source.css \
+            -o .\assets\main.css \
             --minify
 
       # ── Build ───────────────────────────────────────────────────────
@@ -92,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target/dx/chauve/release/macos/app/${{ matrix.artifact_name }}
+          path: target/dx/chauve/release/macos/${{ matrix.artifact_name }}
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
