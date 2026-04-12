@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Settings {
     #[serde(default)]
     pub providers: ProvidersSettings,
-    
+
     #[serde(default = "default_poll_frequency")]
     pub poll_frequency: u64,
 }
@@ -45,33 +45,32 @@ mod tests {
     fn valid_config_parse() {
         let config = Config::builder()
             .add_source(File::from_str(
-                
-                    "[[providers.grafana]]\n\
+                "poll_frequency=10\n\
+                     [[providers.grafana]]\n\
                         url=\"http://localhost:3000\"\n\
-                        token=\"glsa_Som3t0k3n\"\n\
-                        poll_frequency=10\n"
-                ,
+                        token=\"glsa_Som3t0k3n\"\n",
                 FileFormat::Toml,
             ))
             .build()
             .unwrap();
 
-    let settings = config.try_deserialize::<Settings>().unwrap();
+        let settings = config.try_deserialize::<Settings>().unwrap();
 
-        assert_eq!(settings.providers.grafana[0].url.as_str(), "http://localhost:3000");
-        assert_eq!(settings.providers.grafana[0].token.as_str(), "glsa_Som3t0k3n");
+        assert_eq!(
+            settings.providers.grafana[0].url.as_str(),
+            "http://localhost:3000"
+        );
+        assert_eq!(
+            settings.providers.grafana[0].token.as_str(),
+            "glsa_Som3t0k3n"
+        );
         assert_eq!(settings.poll_frequency, 10);
     }
 
     #[test]
     fn empty_config_parse() {
         let config = Config::builder()
-            .add_source(File::from_str(
-                
-                    "\n"
-                ,
-                FileFormat::Toml,
-            ))
+            .add_source(File::from_str("\n", FileFormat::Toml))
             .build()
             .unwrap();
 
