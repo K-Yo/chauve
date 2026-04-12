@@ -68,13 +68,6 @@ jobs:
       - name: Install Dioxus CLI
         run: cargo install dioxus-cli --locked
 
-      # ── Code quality checks ─────────────────────────────────────────
-      - name: Run cargo check
-        run: cargo check --verbose --features desktop
-
-      - name: Run cargo test
-        run: cargo test --verbose --features desktop
-
       # ── Node + Tailwind CSS ─────────────────────────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -99,6 +92,13 @@ jobs:
             -i .\assets\source.css \
             -o .\assets\main.css \
             --minify
+
+      # ── Code quality checks ─────────────────────────────────────────
+      - name: Run cargo check
+        run: cargo check --verbose --features desktop
+
+      - name: Run cargo test
+        run: cargo test --verbose --features desktop
 
       # ── Build ───────────────────────────────────────────────────────
       - name: Build desktop app
