@@ -1,11 +1,8 @@
 use crate::entities::alert::{Alert, Severity};
-use crate::poller::Poller;
 use dioxus::prelude::*;
 
 use dioxus_free_icons::Icon;
-use dioxus_free_icons::icons::fa_solid_icons::{
-    FaCloud, FaCloudBolt, FaCloudRain, FaCloudShowersHeavy, FaMagnifyingGlass,
-};
+use dioxus_free_icons::icons::fa_solid_icons::FaMagnifyingGlass;
 
 #[component]
 fn LinkIcon() -> Element {

@@ -23,7 +23,7 @@
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use std::fmt;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, warn};
 
 use crate::{
     entities::{alert::Alert, provider::Provider, settings::Settings},
