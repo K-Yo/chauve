@@ -83,15 +83,12 @@ jobs:
           npx @tailwindcss/cli \
             -i ./assets/source.css \
             -o ./assets/main.css \
-            --minify
+            -m
 
       - name: Build Tailwind CSS (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          npx @tailwindcss/cli \
-            -i .\assets\source.css \
-            -o .\assets\main.css \
-            --minify
+          npx @tailwindcss/cli -i .\assets\source.css -o .\assets\main.css -m
 
       # ── Code quality checks ─────────────────────────────────────────
       - name: Run cargo check
@@ -102,7 +99,7 @@ jobs:
 
       # ── Build ───────────────────────────────────────────────────────
       - name: Build desktop app
-        run: dx build --release --platform desktop
+        run: dx bundle --release --platform desktop
 
       # ── Locate & upload artifact ────────────────────────────────────
       - name: Upload artifact (Linux)
