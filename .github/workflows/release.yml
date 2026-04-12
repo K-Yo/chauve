@@ -73,7 +73,7 @@ jobs:
 
       - name: Build Tailwind CSS
         run: |
-          tailwindcss \
+          npx @tailwindcss/cli \
             -i ./assets/source.css \
             -o ./assets/main.css \
             --minify
