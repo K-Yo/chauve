@@ -43,7 +43,7 @@ pub fn AlertComponent(
     let severity_class = format!("severity-{}", alert.severity.machinename);
     rsx! {
         tr {
-            class: "alert {severity_class} {pinned_style}",
+            class: "alert whitespace-nowrap {severity_class} {pinned_style}",
             onclick: {
                 let id = id.clone();
                 move |_| on_click.call(id.clone())
@@ -80,7 +80,7 @@ pub fn AlertList(
 
     rsx! {
         div { class: "overflow-x-scroll overflow-y-scroll pt-12",
-            table { class: "border-separate border-spacing-0 table-auto w-full",
+            table { class: "border-separate border-spacing-0 table-auto min-w-full",
                 for alert in sorted_alerts {
                     AlertComponent {
                         alert: alert.clone(),
