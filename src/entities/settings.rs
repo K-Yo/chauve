@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Settings {
     #[serde(default)]
     pub providers: ProvidersSettings,
@@ -9,13 +9,13 @@ pub struct Settings {
     pub poll_frequency: u64,
 }
 
-#[derive(Deserialize, Default, Clone, Debug)]
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
 pub struct ProvidersSettings {
     #[serde(default)]
     pub grafana: Vec<ProviderGrafanaSetting>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProviderGrafanaSetting {
     pub url: String,
     pub token: String,
@@ -24,6 +24,15 @@ pub struct ProviderGrafanaSetting {
 // Default poll frequency in seconds (5 seconds)
 fn default_poll_frequency() -> u64 {
     5
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            providers: ProvidersSettings::default(),
+            poll_frequency: default_poll_frequency(),
+        }
+    }
 }
 
 #[cfg(test)]
