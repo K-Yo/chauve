@@ -20,10 +20,13 @@ jobs:
         include:
           - os: ubuntu-latest
             asset_name: chauve-linux-amd64
+            asset_path: target/dx/chauve/release/linux/app/chauve
           - os: windows-latest
-            asset_name: chauve-windows-amd64.exe
+            asset_name: chauve-windows-amd64
+            asset_path: target/dx/chauve/release/windows/app/chauve.exe
           - os: macos-latest
             asset_name: chauve-macos-amd64
+            asset_path: target/dx/chauve/release/macos/Chauve.app
 
     steps:
       - name: Checkout
@@ -64,18 +67,9 @@ jobs:
         with:
           node-version: "latest"
 
-      - name: Build Tailwind CSS (Linux and MacOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          npx @tailwindcss/cli \
-            -i ./assets/source.css \
-            -o ./assets/main.css \
-            -m
+      - name: Build Tailwind CSS
+        run: npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css -m
 
-      - name: Build Tailwind CSS (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          npx @tailwindcss/cli -i .\assets\source.css -o .\assets\main.css -m
 
       # ── Code quality checks ─────────────────────────────────────────
       - name: Run cargo check
@@ -85,41 +79,17 @@ jobs:
         run: cargo test --verbose --features desktop
 
       # ── Build ───────────────────────────────────────────────────────
-      - name: Build desktop app (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Build desktop app
         shell: bash
-        run: dx bundle --release --platform desktop --package-types rpm --package-types deb --package-types appimage
-
-      - name: Build desktop app (MacOS)
-        if: matrix.os == 'macos-latest'
-        shell: bash
-        run: dx bundle --release --platform desktop --package-types macos --package-types dmg
-
-      - name: Build desktop app (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: dx bundle --release --platform desktop --package-types msi --package-types nsis
+        run: dx build --release --platform desktop
 
       # ── Locate & upload artifact ────────────────────────────────────
-      - name: Upload artifact (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target/dx/chauve/bundle/linux/
-      - name: Upload artifact (MacOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.asset_name }}
-          path: target/dx/chauve/bundle/macos/
+          path: ${{ matrix.asset_path }}
 
-      - name: Upload artifact (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.asset_name }}
-          path: target\dx\chauve\bundle\windows\
 
   # ── GitHub Release ────────────────────────────────────────────────
   release:
