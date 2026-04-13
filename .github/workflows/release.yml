@@ -4,7 +4,7 @@ name: Build Desktop Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 env:
@@ -19,13 +19,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: chauve
             asset_name: chauve-linux-amd64
           - os: windows-latest
-            artifact_name: chauve.exe
             asset_name: chauve-windows-amd64.exe
           - os: macos-latest
-            artifact_name: Chauve.app
             asset_name: chauve-macos-amd64
 
     steps:
@@ -72,7 +69,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 'latest'
+          node-version: "latest"
 
       - name: Install and cache node-modules
         uses: bahmutov/npm-install@v1
@@ -98,8 +95,33 @@ jobs:
         run: cargo test --verbose --features desktop
 
       # ── Build ───────────────────────────────────────────────────────
-      - name: Build desktop app
-        run: dx bundle --release --platform desktop
+      - name: Build desktop app (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: dx bundle \
+          --release \
+          --platform desktop \
+          --package-types rpm \
+          --package-types deb \
+          --package-types appimage
+
+      - name: Build desktop app (MacOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: dx bundle \
+          --release \
+          --platform desktop \
+          --package-types macos \
+          --package-types dmg
+
+      - name: Build desktop app (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: dx bundle \
+          --release \
+          --platform desktop \
+          --package-types msi \
+          --package-types nsis
 
       # ── Locate & upload artifact ────────────────────────────────────
       - name: Upload artifact (Linux)
@@ -107,20 +129,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target/dx/chauve/release/linux/app/${{ matrix.artifact_name }}
+          path: target/dx/chauve/bundle/linux/
       - name: Upload artifact (MacOS)
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target/dx/chauve/release/macos/${{ matrix.artifact_name }}
+          path: target/dx/chauve/bundle/macos/
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target\dx\chauve\release\windows\app\${{ matrix.artifact_name }}
+          path: target\dx\chauve\bundle\windows\
 
   # ── GitHub Release ────────────────────────────────────────────────
   release:

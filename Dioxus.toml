@@ -4,5 +4,8 @@ default_platform = "desktop"
 asset_dir = "assets"
 
 
-[desktop.bundle]
+[bundle]
+publisher = "K-Yo"
 identifier = "com.github.k-yo.chauve"
+category = "Utility"
+short_description = "Chauve, a notification monitor"
