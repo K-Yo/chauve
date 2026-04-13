@@ -71,6 +71,36 @@ pub fn SettingsView() -> Element {
                 }
             }
 
+            // Notifications
+            div { class: "mb-6",
+                h3 { class: "font-bold mb-2", "Notifications" }
+                div { class: "flex items-center gap-2 mb-2",
+                    input {
+                        r#type: "checkbox",
+                        id: "notif-enabled",
+                        checked: draft.read().notifications.enabled,
+                        oninput: move |e| {
+                            draft.write().notifications.enabled = e.checked();
+                        },
+                    }
+                    label { r#for: "notif-enabled", class: "text-sm", "Enable desktop notifications" }
+                }
+                div { class: "flex items-center gap-2",
+                    label { class: "text-sm", "Minimum severity" }
+                    select {
+                        class: "border px-2 py-1",
+                        value: "{draft.read().notifications.min_severity}",
+                        oninput: move |e| {
+                            draft.write().notifications.min_severity = e.value();
+                        },
+                        option { value: "critical", "Critical" }
+                        option { value: "high", "High" }
+                        option { value: "medium", "Medium" }
+                        option { value: "low", "Low" }
+                    }
+                }
+            }
+
             button {
                 class: "bg-orange-500 hover:bg-orange-700 text-black py-2 px-4 rounded",
                 onclick: move |_| {

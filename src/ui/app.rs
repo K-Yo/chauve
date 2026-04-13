@@ -1,10 +1,13 @@
 use super::alert::AlertList;
 use super::settings::SettingsView;
+use crate::entities::alert::severity_order;
 use crate::entities::settings::Settings;
+use crate::notifications;
 use crate::poller::Poller;
 use crate::settings::get_settings;
 use crate::ui::header::Header;
 use dioxus::prelude::*;
+use std::collections::HashSet;
 use tokio::time::Duration;
 
 // const FAVICON: Asset = asset!("/assets/favicon.ico");
@@ -16,6 +19,11 @@ pub fn AlertsApp() -> Element {
     let settings_signal: Signal<Settings> = use_context();
 
     use_coroutine::<(), _, _>(move |_| async move {
+        // IDs we have already notified about — never notify the same alert twice per session.
+        let mut seen_ids: HashSet<String> = HashSet::new();
+        // Skip notifications on the very first poll so we don't spam on startup.
+        let mut first_poll = true;
+
         loop {
             // Poll immediately, then sleep for the configured duration.
             // Reading poll_frequency inside the loop means each sleep uses
@@ -23,6 +31,21 @@ pub fn AlertsApp() -> Element {
             let poller = poller_signal.read().clone();
             match poller.poll_once().await {
                 Ok(data) => {
+                    if !first_poll {
+                        let notif = settings_signal.read().notifications.clone();
+                        if notif.enabled {
+                            let threshold = severity_order(&notif.min_severity);
+                            for alert in data.alerts.iter() {
+                                if !seen_ids.contains(&alert.id)
+                                    && alert.severity.order() <= threshold
+                                {
+                                    notifications::send_notification(alert);
+                                }
+                            }
+                        }
+                    }
+                    first_poll = false;
+                    seen_ids.extend(data.alerts.iter().map(|a| a.id.clone()));
                     poller_signal.write().update_with(data);
                 }
                 Err(stats) => {

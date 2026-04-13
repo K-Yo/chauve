@@ -1,5 +1,6 @@
 //! Chauve, a notification system.
 mod entities;
+mod notifications;
 mod ui;
 mod providers;
 mod settings;
