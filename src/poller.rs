@@ -111,7 +111,6 @@ impl Poller {
 
         if error_count > 0 {
             warn!(target: "poller", "Poll completed with issues: {}", stats);
-            return Err(stats);
         }
 
         Ok(data)
@@ -197,9 +196,9 @@ mod tests {
             self.calls.lock().unwrap().push(self.id);
 
             if self.should_error {
-                // Return some error from reqwest
+                // Return some error from reqwest - use a truly invalid URL
                 Err(ProviderError::Anyhow(
-                    reqwest::Url::parse("invalid-url://").unwrap_err().into(),
+                    reqwest::Url::parse("://invalid-url").unwrap_err().into(),
                 ))
             } else {
                 // Return some test alerts
