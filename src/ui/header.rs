@@ -1,10 +1,13 @@
-use crate::poller::Poller;
 use crate::entities::alert::Alert;
+use crate::entities::settings::Settings;
+use crate::poller::Poller;
+use crate::settings::get_settings;
 use dioxus::prelude::*;
 
 #[component]
 fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
+    let mut settings_signal: Signal<Settings> = use_context();
 
     rsx! {
         "last poll time: {last_poll_time}"
@@ -12,6 +15,11 @@ fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Eleme
         div { class: "fixed top-0 right-0 flex gap-1 p-1",
             button {
                 onclick: move |_| {
+                    // Re-read settings from disk and rebuild the poller.
+                    let new_settings = get_settings();
+                    *poller_signal.write() = Poller::new(new_settings.clone());
+                    *settings_signal.write() = new_settings;
+
                     let poller = poller_signal.read().clone();
                     spawn(async move {
                         if let Ok(data) = poller.poll_once().await {
