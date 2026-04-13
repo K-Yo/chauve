@@ -26,6 +26,15 @@ fn default_poll_frequency() -> u64 {
     5
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            providers: ProvidersSettings::default(),
+            poll_frequency: default_poll_frequency(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use config::{Config, File, FileFormat};
