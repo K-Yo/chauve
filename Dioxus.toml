@@ -3,26 +3,6 @@ name = "chauve"
 default_platform = "desktop"
 asset_dir = "assets"
 
-[web.app]
-
-# HTML title tag content
-title = "Chauve"
-
-# include `assets` in web platform
-[web.resource]
-
-# Additional CSS style files
-style = []
-
-# Additional JavaScript files
-script = []
-
-[web.resource.dev]
-
-# Javascript code file
-# serve: [dev-server] only
-script = []
-
 
 [desktop.bundle]
 identifier = "com.github.k-yo.chauve"

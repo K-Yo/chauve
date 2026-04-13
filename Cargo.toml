@@ -18,7 +18,5 @@ thiserror = "2.0.18"
 tracing = "0.1.44"
 dioxus-logger = "0.7.4"
 [features]
-default = ["web"]
-web = ["dioxus/web"]
+default = ["desktop"]
 desktop = ["dioxus/desktop"]
-mobile = ["dioxus/mobile"]
