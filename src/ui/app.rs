@@ -8,7 +8,7 @@ use dioxus::prelude::*;
 use tokio::time::Duration;
 
 // const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.css");
+const MAIN_CSS: &str = include_str!("../../assets/main.css");
 
 #[component]
 pub fn AlertsApp() -> Element {
@@ -50,7 +50,7 @@ pub fn AlertsApp() -> Element {
     };
 
     rsx! {
-        document::Stylesheet { href: MAIN_CSS }
+        document::Style { { MAIN_CSS } }
         div { class: "h-screen relative",
             Header {
                 active_alert,
