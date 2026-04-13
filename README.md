@@ -1,5 +1,7 @@
 # chauve
 
+[![Build Desktop Release](https://github.com/K-Yo/chauve/actions/workflows/release.yml/badge.svg)](https://github.com/K-Yo/chauve/actions/workflows/release.yml)
+
 An alert notification system for monitoring and visualizing alerts from various monitoring platforms. Built with Rust and Dioxus, chauve provides a clean, responsive interface for aggregating and displaying alerts from multiple sources.
 
 ## Quickstart

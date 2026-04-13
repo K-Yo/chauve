@@ -37,19 +37,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       # ── Linux system dependencies ───────────────────────────────────
+      
       - name: Cache apt packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: ${{ runner.os }}-apt-${{ hashFiles('**/*.txt') }}
-
-      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: |
             libwebkit2gtk-4.1-dev \
             build-essential \
             curl \
@@ -70,9 +63,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "latest"
-
-      - name: Install and cache node-modules
-        uses: bahmutov/npm-install@v1
 
       - name: Build Tailwind CSS (Linux and MacOS)
         if: matrix.os != 'windows-latest'
@@ -98,30 +88,17 @@ jobs:
       - name: Build desktop app (Linux)
         if: matrix.os == 'ubuntu-latest'
         shell: bash
-        run: dx bundle \
-          --release \
-          --platform desktop \
-          --package-types rpm \
-          --package-types deb \
-          --package-types appimage
+        run: dx bundle --release --platform desktop --package-types rpm --package-types deb --package-types appimage
 
       - name: Build desktop app (MacOS)
         if: matrix.os == 'macos-latest'
         shell: bash
-        run: dx bundle \
-          --release \
-          --platform desktop \
-          --package-types macos \
-          --package-types dmg
+        run: dx bundle --release --platform desktop --package-types macos --package-types dmg
 
       - name: Build desktop app (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
-        run: dx bundle \
-          --release \
-          --platform desktop \
-          --package-types msi \
-          --package-types nsis
+        run: dx bundle --release --platform desktop --package-types msi --package-types nsis
 
       # ── Locate & upload artifact ────────────────────────────────────
       - name: Upload artifact (Linux)
