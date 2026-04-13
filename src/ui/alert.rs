@@ -1,21 +1,6 @@
 use crate::entities::alert::{Alert, Severity};
 use dioxus::prelude::*;
 
-use dioxus_free_icons::Icon;
-use dioxus_free_icons::icons::fa_solid_icons::FaMagnifyingGlass;
-
-#[component]
-fn LinkIcon() -> Element {
-    rsx!(
-        Icon {
-            width: None,
-            height: None,
-            icon: FaMagnifyingGlass,
-            style: "height: 1em",
-        }
-    )
-}
-
 // Define severity priority for sorting
 fn severity_priority(severity: &Severity) -> i32 {
     match severity.machinename.as_str() {
@@ -54,7 +39,7 @@ pub fn AlertComponent(
                 move |_| on_mouse_leave.call(id.clone())
             },
             td { class: "p-1",
-                a { href: alert.link, target: "_blank", LinkIcon {} }
+                a { href: alert.link, target: "_blank", "🔍" }
             }
             td { class: "p-1", "{alert.title}" }
             td { class: "p-1 truncate", "{alert.summary}" }
