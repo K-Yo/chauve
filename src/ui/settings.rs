@@ -1,5 +1,6 @@
 use crate::entities::settings::{ProviderGrafanaSetting, Settings};
 use crate::poller::Poller;
+use crate::settings::settings_path;
 use dioxus::prelude::*;
 
 #[component]
@@ -76,8 +77,9 @@ pub fn SettingsView() -> Element {
                     let new_settings = draft.read().clone();
                     match toml::to_string(&new_settings) {
                         Ok(toml_str) => {
-                            if let Err(e) = std::fs::write("Settings.toml", &toml_str) {
-                                tracing::error!("Failed to write Settings.toml: {}", e);
+                            let path = settings_path();
+                            if let Err(e) = std::fs::write(&path, &toml_str) {
+                                tracing::error!("Failed to write settings to {}: {}", path.display(), e);
                                 return;
                             }
                         }
