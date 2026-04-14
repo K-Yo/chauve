@@ -14,10 +14,18 @@ pub fn send_notification(alert: &Alert) {
         alert.description.clone()
     };
 
+    let urgency = match alert.severity.machinename.as_str() {
+        "critical" => notify_rust::Urgency::Critical,
+        "high" => notify_rust::Urgency::Critical,
+        "medium" => notify_rust::Urgency::Normal,
+        _ => notify_rust::Urgency::Low,
+    };
+
     tokio::task::spawn_blocking(move || {
         if let Err(e) = notify_rust::Notification::new()
             .appname("chauve")
             .summary(&summary)
+            .urgency(urgency)
             .body(&body)
             .show()
         {
