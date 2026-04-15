@@ -92,7 +92,8 @@ fn send_macos(summary: &str, body: &str, severity: &str) {
 
 #[cfg(target_os = "windows")]
 fn send_windows(summary: &str, body: &str, severity: &str) {
-    use winrt_toast_reborn::{Audio, Header, LoopingSound, Sound, Text, Toast, ToastManager};
+    use winrt_toast_reborn::{Audio, Header, Text, Toast, ToastManager};
+    use winrt_toast_reborn::content::audio::{Sound,LoopingSound};
 
     let manager = ToastManager::new("Chauve.Alerts");
 
