@@ -20,7 +20,13 @@ impl GrafanaProvider {
 #[async_trait]
 impl Provider for GrafanaProvider {
     async fn alerts(&self) -> Result<Vec<Alert>, ProviderError> {
-        let generic_alerts = self.pull().await?.iter().map(convert_alert).collect::<Vec<Alert>>();
+        let generic_alerts = self
+            .pull()
+            .await?
+            .iter()
+            .filter(|a| !a.status.is_suppressed())
+            .map(convert_alert)
+            .collect::<Vec<Alert>>();
         Ok(generic_alerts)
     }
     fn clone_box(&self) -> Box<dyn Provider> {

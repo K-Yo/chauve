@@ -21,7 +21,6 @@ pub struct GrafanaAlert {
     pub ends_at: Option<DateTime<Utc>>,
 
     pub status: AlertStatus,
-    pub receivers: Vec<Receiver>,
 
     pub fingerprint: String,
 
@@ -73,11 +72,8 @@ pub struct AlertStatus {
     pub inhibited_by: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Receiver {
-    pub name: String,
+impl AlertStatus {
+    pub fn is_suppressed(&self) -> bool {
+        self.state == "suppressed" || !self.silenced_by.is_empty() || !self.inhibited_by.is_empty()
+    }
 }
-
-pub type ApiResponse = Vec<GrafanaAlert>;
-
-pub struct Grafana {}
