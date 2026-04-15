@@ -18,7 +18,18 @@ tracing = "0.1.44"
 dioxus-logger = "0.7.4"
 toml = "1.1.2"
 directories = "5"
+
+[target.'cfg(target_os = "linux")'.dependencies]
 notify-rust = { version = "4", default-features = false, features = ["z"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Provides subtitle, per-severity sounds, and direct macOS Notification Center access.
+mac-notification-sys = "0.6"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Proper WinRT toast notifications: sound selection, duration, attribution text, app ID.
+winrt-toast-reborn = "0.3"
+
 [features]
 default = ["desktop"]
 desktop = ["dioxus/desktop"]

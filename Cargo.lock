@@ -363,6 +363,7 @@ dependencies = [
  "dioxus-logger",
  "directories",
  "futures",
+ "mac-notification-sys",
  "notify-rust",
  "reqwest",
  "serde",
@@ -370,6 +371,7 @@ dependencies = [
  "tokio",
  "toml 1.1.2+spec-1.1.0",
  "tracing",
+ "winrt-toast-reborn",
 ]
 
 [[package]]
@@ -5857,6 +5859,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09dac053f1cd375980747450bfc7250c264eaae0583872e845c0c7cd578872b5"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "winreg"
+version = "0.55.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb5a765337c50e9ec252c2069be9bf91c7df47afb103b642ba3a53bf8101be97"
+dependencies = [
+ "cfg-if",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "winrt-toast-reborn"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4536ba8861defe9571414f4629a64e613cc5be2ebf7739858b2ca64a2bdadf1"
+dependencies = [
+ "scopeguard",
+ "thiserror 2.0.18",
+ "url",
+ "windows",
+ "winreg",
 ]
 
 [[package]]
