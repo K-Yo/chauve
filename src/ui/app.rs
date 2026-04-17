@@ -73,7 +73,7 @@ pub fn AlertsApp() -> Element {
     };
 
     rsx! {
-        document::Style { { MAIN_CSS } }
+        document::Style { {MAIN_CSS} }
         div { class: "h-screen relative",
             Header {
                 active_alert,

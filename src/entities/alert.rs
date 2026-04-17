@@ -1,5 +1,7 @@
 //! Entities related to alerts
 
+use std::fmt::Display;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alert {
     pub id: String,
@@ -9,6 +11,7 @@ pub struct Alert {
     pub summary: String,
     pub link: String,
 }
+
 
 fn to_machinename(input: &str) -> String {
     input.chars()
