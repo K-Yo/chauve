@@ -62,7 +62,7 @@ fn send_linux(alert: &Alert) {
 // Sounds from the macOS Monterey+ set.
 // ---------------------------------------------------------------------------
 
-#[cfg(target_os = "macos")]
+// #[cfg(target_os = "macos")]
 fn send_macos(salert: &Alert) {
     use mac_notification_sys::{NotificationOptions, send_notification as macos_notify};
 
@@ -90,7 +90,7 @@ fn send_macos(salert: &Alert) {
 // Supports sound selection, duration, and attribution text.
 // ---------------------------------------------------------------------------
 
-#[cfg(target_os = "windows")]
+// #[cfg(target_os = "windows")]
 fn send_windows(alert: &Alert) {
     use winrt_toast_reborn::ToastDuration;
     use winrt_toast_reborn::content::audio::{LoopingSound, Sound};
@@ -113,11 +113,10 @@ fn send_windows(alert: &Alert) {
     let mut toast = binding
         .header(Header::new("chauve_alerts", format!("{} alert", alert.severity.machinename), ""))
         .text1(Text::new(alert.summary.as_str()))
+        .text2(Text::new(alert.description.as_str()))
         .image(1, img)
         .duration(ToastDuration::Long)
-        // TODO how to open the default browser on click?
-        // .action(Action::new("See on app", alert.id.clone(), "view_alert").with_activation_type(ActivationType::Protocol))
-        ;
+        .launch("");
 
     if let Some(a) = audio {
         toast = toast.audio(a);
