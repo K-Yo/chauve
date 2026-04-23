@@ -69,11 +69,10 @@ impl Tray {
 }
 
 fn load_icon() -> tray_icon::Icon {
-    // 16×16 RGBA solid square as a minimal fallback icon.
-    let width: u32 = 16;
-    let height: u32 = 16;
-    let rgba: Vec<u8> = (0..width * height)
-        .flat_map(|_| [0x4a_u8, 0x90_u8, 0xe2_u8, 0xff_u8])
-        .collect();
-    tray_icon::Icon::from_rgba(rgba, width, height).expect("valid icon")
+    let bytes = include_bytes!("../assets/icons/icon.png");
+    let img = image::load_from_memory(bytes)
+        .expect("valid icon PNG")
+        .into_rgba8();
+    let (width, height) = img.dimensions();
+    tray_icon::Icon::from_rgba(img.into_raw(), width, height).expect("valid icon")
 }
