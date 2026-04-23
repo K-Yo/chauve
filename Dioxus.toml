@@ -9,3 +9,4 @@ publisher = "K-Yo"
 identifier = "com.github.k-yo.chauve"
 category = "Utility"
 short_description = "Chauve, a notification monitor"
+icon = ["assets/icons/icon.ico", "assets/icons/icon.icns", "assets/icons/icon.png"]
