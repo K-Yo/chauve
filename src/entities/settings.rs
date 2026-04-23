@@ -7,6 +7,36 @@ pub struct Settings {
 
     #[serde(default = "default_poll_frequency")]
     pub poll_frequency: u64,
+
+    #[serde(default)]
+    pub notifications: NotificationSettings,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct NotificationSettings {
+    #[serde(default = "default_notification_enabled")]
+    pub enabled: bool,
+    /// Minimum severity to notify. Alerts at this severity or more severe will trigger a notification.
+    /// Recognized values (most to least severe): critical, high, medium, low.
+    #[serde(default = "default_notification_min_severity")]
+    pub min_severity: String,
+}
+
+fn default_notification_enabled() -> bool {
+    true
+}
+
+fn default_notification_min_severity() -> String {
+    "high".to_string()
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            enabled: default_notification_enabled(),
+            min_severity: default_notification_min_severity(),
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
@@ -31,6 +61,7 @@ impl Default for Settings {
         Self {
             providers: ProvidersSettings::default(),
             poll_frequency: default_poll_frequency(),
+            notifications: NotificationSettings::default(),
         }
     }
 }

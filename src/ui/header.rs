@@ -23,6 +23,9 @@ fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Eleme
                     let poller = poller_signal.read().clone();
                     spawn(async move {
                         if let Ok(data) = poller.poll_once().await {
+                            crate::notifications::send_notification(
+                                &data.clone().alerts.pop().unwrap(),
+                            );
                             let mut write_poller = poller_signal.write();
                             write_poller.update_with(data);
                         }

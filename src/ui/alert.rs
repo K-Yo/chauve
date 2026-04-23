@@ -1,6 +1,7 @@
 use crate::entities::alert::{Alert, Severity};
 use dioxus::prelude::*;
 
+
 // Define severity priority for sorting
 fn severity_priority(severity: &Severity) -> i32 {
     match severity.machinename.as_str() {
@@ -58,7 +59,7 @@ pub fn AlertList(
 ) -> Element {
     // Sort alerts by severity, with critical first
     let mut sorted_alerts = alerts.clone();
-    sorted_alerts.sort_by_key(|alert| severity_priority(&alert.severity));
+    sorted_alerts.sort_by_key(|alert| alert.severity.order());
 
     rsx! {
         div { class: "overflow-x-scroll overflow-y-scroll pt-12",
