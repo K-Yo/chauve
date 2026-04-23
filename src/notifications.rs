@@ -82,9 +82,15 @@ fn send_macos(alert: &Alert) {
 
     // macOS Monterey+ system sounds, chosen by urgency feel.
     match severity {
-        "critical" => { notification.sound("Crystal"); }
-        "high" => { notification.sound("Spell"); }
-        "medium" => { notification.sound("Bubble"); }
+        "critical" => {
+            notification.sound("Crystal");
+        }
+        "high" => {
+            notification.sound("Spell");
+        }
+        "medium" => {
+            notification.sound("Bubble");
+        }
         _ => {}
     }
 
@@ -119,7 +125,11 @@ fn send_windows(alert: &Alert) {
 
     let mut binding = Toast::new();
     let mut toast = binding
-        .header(Header::new("chauve_alerts", format!("{} alert", alert.severity.machinename), ""))
+        .header(Header::new(
+            "chauve_alerts",
+            format!("{} alert", alert.severity.machinename),
+            "",
+        ))
         .text1(Text::new(alert.summary.as_str()))
         .text2(Text::new(alert.description.as_str()))
         .image(1, img)

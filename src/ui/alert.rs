@@ -1,7 +1,6 @@
 use crate::entities::alert::{Alert, Severity};
 use dioxus::prelude::*;
 
-
 // Define severity priority for sorting
 fn severity_priority(severity: &Severity) -> i32 {
     match severity.machinename.as_str() {
@@ -20,9 +19,9 @@ pub fn AlertComponent(
     on_mouse_enter: EventHandler<String>,
     on_mouse_leave: EventHandler<String>,
 ) -> Element {
-    let id=alert.id.clone();
+    let id = alert.id.clone();
     // TODO: inset does not work
-    let pinned_style = if is_pinned {"inset-shadow-xl/90"} else {""};
+    let pinned_style = if is_pinned { "inset-shadow-xl/90" } else { "" };
     let severity_class = format!("severity-{}", alert.severity.machinename);
     rsx! {
         tr {
@@ -44,7 +43,7 @@ pub fn AlertComponent(
             }
             td { class: "p-1", "{alert.title}" }
             td { class: "p-1 truncate", "{alert.summary}" }
-        
+
         }
     }
 }

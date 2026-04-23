@@ -1,11 +1,14 @@
 use super::alert::AlertList;
 use super::settings::SettingsView;
+use crate::TRAY_RX;
 use crate::entities::alert::severity_order;
 use crate::entities::settings::Settings;
 use crate::notifications;
 use crate::poller::Poller;
 use crate::settings::get_settings;
+use crate::tray::TrayCommand;
 use crate::ui::header::Header;
+use dioxus::desktop::{WindowCloseBehaviour, window};
 use dioxus::prelude::*;
 use std::collections::HashSet;
 use tokio::time::Duration;
@@ -55,6 +58,33 @@ pub fn AlertsApp() -> Element {
 
             let poll_frequency = settings_signal.read().poll_frequency;
             tokio::time::sleep(Duration::from_secs(poll_frequency)).await;
+        }
+    });
+
+    // Hide instead of close so the tray icon can reopen the window.
+    let desktop = window();
+    desktop.set_close_behavior(WindowCloseBehaviour::WindowHides);
+
+    use_coroutine::<(), _, _>(move |_| async move {
+        loop {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            let Some(rx_guard) = TRAY_RX.get() else {
+                continue;
+            };
+            let cmd = rx_guard.lock().ok().and_then(|rx| rx.try_recv().ok());
+            match cmd {
+                Some(TrayCommand::Show) => {
+                    let desktop = window();
+                    desktop.window.set_visible(true);
+                    desktop.window.request_user_attention(Some(
+                        dioxus::desktop::tao::window::UserAttentionType::Informational,
+                    ));
+                }
+                Some(TrayCommand::Quit) => {
+                    std::process::exit(0);
+                }
+                None => {}
+            }
         }
     });
 

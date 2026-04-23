@@ -46,7 +46,7 @@ fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Eleme
 
 #[component]
 pub fn AlertDetails(alert: Alert, unpin: EventHandler) -> Element {
-    rsx!{
+    rsx! {
         div {
             class: "scroll-auto whitespace-pre-wrap",
             onclick: move |_| unpin.call(()),

@@ -1,4 +1,4 @@
-use crate::settings::{config_dir,AUMID};
+use crate::settings::{AUMID, config_dir};
 use std::{fs::File, io::Write};
 
 pub fn register_app() {
@@ -6,10 +6,10 @@ pub fn register_app() {
 
     #[cfg(target_os = "linux")]
     setup_linux();
-    
+
     #[cfg(target_os = "windows")]
     setup_windows();
-    
+
     #[cfg(target_os = "macos")]
     setup_macos();
 }

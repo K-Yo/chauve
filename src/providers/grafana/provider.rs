@@ -1,5 +1,8 @@
 use super::alert::GrafanaAlert;
-use crate::entities::{alert::Alert, provider::{Provider, ProviderError, convert_alert}};
+use crate::entities::{
+    alert::Alert,
+    provider::{Provider, ProviderError, convert_alert},
+};
 use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
@@ -46,7 +49,6 @@ impl GrafanaProvider {
             .json::<Vec<GrafanaAlert>>()
             .await?;
 
-        
         Ok(response)
     }
 }
