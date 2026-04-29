@@ -1,15 +1,5 @@
-use crate::entities::alert::{Alert, Severity};
+use crate::entities::alert::Alert;
 use dioxus::prelude::*;
-
-// Define severity priority for sorting
-fn severity_priority(severity: &Severity) -> i32 {
-    match severity.machinename.as_str() {
-        "critical" => 0,
-        "high" => 1,
-        "medium" => 2,
-        _ => 3, // default for unknown or lower severities
-    }
-}
 
 #[component]
 pub fn AlertComponent(
@@ -21,11 +11,11 @@ pub fn AlertComponent(
 ) -> Element {
     let id = alert.id.clone();
     // TODO: inset does not work
-    let pinned_style = if is_pinned { "inset-shadow-xl/90" } else { "" };
+    let pinned_class = if is_pinned { "shadow-inner" } else { "" };
     let severity_class = format!("severity-{}", alert.severity.machinename);
     rsx! {
         tr {
-            class: "alert whitespace-nowrap {severity_class} {pinned_style}",
+            class: "alert whitespace-nowrap {severity_class}",
             onclick: {
                 let id = id.clone();
                 move |_| on_click.call(id.clone())
@@ -41,7 +31,7 @@ pub fn AlertComponent(
             td { class: "p-1",
                 a { href: alert.link, target: "_blank", "🔍" }
             }
-            td { class: "p-1", "{alert.title}" }
+            td { class: "p-1 {pinned_class}", "{alert.title}" }
             td { class: "p-1 truncate", "{alert.summary}" }
 
         }

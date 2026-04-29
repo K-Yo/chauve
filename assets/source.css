@@ -3,43 +3,12 @@
 body {
     background-color: #00000000;
     color: #000000;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     margin: 0px;
 }
 
 .alert {
     /* alert component */
-}
-
-.severity-1 {
-    background-color: #780000;
-    color: #ffffff;
-}
-
-.severity-1::before {
-    content: "⛔"
-}
-
-.severity-2 {
-    background-color: #c1121f;
-    color: #ffffff;
-}
-
-.severity-3 {
-    background-color: #d33422;
-    color: #ffffff;
-}
-
-.severity-4 {
-    background-color: #e45525;
-}
-
-.severity-5 {
-    background-color: #ffb41f;
-}
-
-.severity-5 {
-    background-color: #fec85d;
 }
 
 .severity-critical {

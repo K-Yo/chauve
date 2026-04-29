@@ -1,5 +1,3 @@
-use dioxus::desktop::{icon_from_memory, trayicon::Icon};
-
 use crate::settings::{AUMID, config_dir};
 use std::{fs::File, io::Write};
 
@@ -35,6 +33,6 @@ pub fn setup_linux() {}
 #[cfg(target_os = "macos")]
 pub fn setup_macos() {}
 
-pub fn icon_bytes() -> &'static[u8] {
+pub fn icon_bytes() -> &'static [u8] {
     include_bytes!("../assets/icons/icon.png")
 }

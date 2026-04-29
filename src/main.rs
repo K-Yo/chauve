@@ -5,7 +5,6 @@ mod poller;
 mod providers;
 mod register;
 mod settings;
-mod tray;
 mod ui;
 
 use crate::{register::icon_bytes, ui::app::App};

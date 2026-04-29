@@ -1,7 +1,5 @@
 //! Entities related to alerts
 
-use std::fmt::Display;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alert {
     pub id: String,
