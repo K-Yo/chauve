@@ -34,7 +34,7 @@ pub fn load_icon() -> Icon {
 }
 
 fn launch(app: fn() -> Element) {
-    let window =  WindowBuilder::new()
+    let window = WindowBuilder::new()
         .with_title("Chauve")
         .with_visible(true)
         .with_inner_size(LogicalSize::new(800.0, 600.0))
@@ -48,12 +48,11 @@ fn launch(app: fn() -> Element) {
         // .with_always_on_top(false)
         // .with_window_icon(Some(load_icon()))
         // .with_min_inner_size(LogicalSize::new(800, 600))
-        // .with_closable(false)
-        ;
+        .with_closable(true);
     LaunchBuilder::new()
         .with_cfg(
             dioxus::desktop::Config::new()
-                // .with_close_behaviour(dioxus::desktop::WindowCloseBehaviour::WindowHides)
+                .with_close_behaviour(dioxus::desktop::WindowCloseBehaviour::WindowHides)
                 .with_icon(load_icon())
                 .with_window(window),
         )

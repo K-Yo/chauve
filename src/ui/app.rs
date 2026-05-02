@@ -7,6 +7,7 @@ use crate::poller::Poller;
 use crate::settings::get_settings;
 use crate::ui::header::Header;
 use crate::ui::tray;
+use dioxus::desktop::muda::MenuItem;
 use dioxus::desktop::trayicon::TrayIcon;
 use dioxus::prelude::*;
 use std::collections::HashSet;
@@ -19,6 +20,7 @@ const MAIN_CSS: &str = include_str!("../../assets/main.css");
 pub fn AlertsApp() -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
     let mut tray_icon_signal: Signal<TrayIcon> = use_context();
+    let mut show_menu_signal: Signal<MenuItem> = use_context();
     let settings_signal: Signal<Settings> = use_context();
 
     use_coroutine::<(), _, _>(move |_| async move {
@@ -54,6 +56,9 @@ pub fn AlertsApp() -> Element {
                         let _ = t.set_icon(Some(tray::generate_severity_icon(&data.alerts)));
                         // update tooltip
                         let _ = t.set_tooltip(tray::generate_tooltip(&data.alerts));
+                    });
+                    show_menu_signal.with_mut(|m| {
+                        m.set_text(tray::generate_menu_text(&data.alerts));
                     });
                     poller_signal.write().update_with(data);
                 }

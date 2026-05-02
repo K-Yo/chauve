@@ -12,9 +12,14 @@ use crate::register::icon_bytes;
 
 pub fn init() -> Result<(), Box<dyn std::error::Error>> {
     let menu = Menu::new();
-    let show_item: MenuItem = MenuItem::new("Show", true, None);
+    let show_item: Signal<MenuItem> = use_signal(|| MenuItem::new("Show", true, None));
+    provide_context(show_item);
     let quit_item: MenuItem = MenuItem::new("Quit", true, None);
-    menu.append_items(&[&show_item, &PredefinedMenuItem::separator(), &quit_item])?;
+    menu.append_items(&[
+        &show_item.read().cloned(),
+        &PredefinedMenuItem::separator(),
+        &quit_item,
+    ])?;
 
     let icon = icon_from_memory(icon_bytes()).expect("valid icon");
 
@@ -33,7 +38,7 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
                 info!("Exiting");
                 std::process::exit(0);
             }
-            id if id == show_item.id() => {
+            id if id == show_item.read().id() => {
                 debug!("showing");
                 let service = dioxus::desktop::window();
                 let window = &service.window;
@@ -166,4 +171,14 @@ pub fn generate_tooltip(alerts: &[Alert]) -> Option<String> {
         .collect();
 
     Some(parts.join(" / "))
+}
+
+pub fn generate_menu_text(alerts: &[Alert]) -> String {
+    let counts = count_by_severity(alerts);
+    let parts: Vec<String> = ["critical", "high", "medium", "low"]
+        .iter()
+        .map(|severity_name| counts[*severity_name].to_string())
+        .collect();
+
+    parts.join(" / ")
 }
