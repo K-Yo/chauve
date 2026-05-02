@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str;
 
 use dioxus::desktop::trayicon::menu::{Menu, MenuItem, PredefinedMenuItem};
 use dioxus::desktop::trayicon::{Icon, TrayIcon, TrayIconBuilder};
