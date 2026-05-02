@@ -25,7 +25,7 @@ jobs:
             asset_name: chauve-windows-amd64
             asset_path: target/dx/chauve/release/windows/app/chauve.exe
           - os: macos-latest
-            asset_name: chauve-macos-amd64
+            asset_name: chauve-macos-arm64
             asset_path: target/dx/chauve/release/macos/Chauve.app
 
     steps:
@@ -40,7 +40,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       # ── Linux system dependencies ───────────────────────────────────
-      
+
       - name: Cache apt packages
         if: matrix.os == 'ubuntu-latest'
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -70,7 +70,6 @@ jobs:
       - name: Build Tailwind CSS
         run: npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css -m
 
-
       # ── Code quality checks ─────────────────────────────────────────
       - name: Run cargo check
         run: cargo check --verbose --features desktop
@@ -90,7 +89,6 @@ jobs:
           name: ${{ matrix.asset_name }}
           path: ${{ matrix.asset_path }}
 
-
   # ── GitHub Release ────────────────────────────────────────────────
   release:
     name: Create Release
@@ -106,8 +104,25 @@ jobs:
         with:
           path: artifacts/
 
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          TAG=${{ github.ref_name }}
+          mkdir -p release-assets
+
+          # Linux: rename binary to include version
+          cp artifacts/chauve-linux-amd64/chauve release-assets/chauve-linux-amd64-${TAG}
+
+          # Windows: rename .exe to include version
+          cp artifacts/chauve-windows-amd64/chauve.exe release-assets/chauve-windows-amd64-${TAG}.exe
+
+          # macOS: compress .app bundle into a versioned zip
+          cd artifacts/chauve-macos-arm64
+          zip -r ../../release-assets/chauve-macos-arm64-${TAG}.zip Chauve.app
+          cd ../../
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: release-assets/*
           generate_release_notes: true
