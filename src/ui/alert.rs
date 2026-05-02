@@ -10,12 +10,15 @@ pub fn AlertComponent(
     on_mouse_leave: EventHandler<String>,
 ) -> Element {
     let id = alert.id.clone();
-    // TODO: inset does not work
-    let pinned_class = if is_pinned { "shadow-inner" } else { "" };
+    let pinned_class = if is_pinned {
+        "inset-ring-2 inset-ring-black"
+    } else {
+        ""
+    };
     let severity_class = format!("severity-{}", alert.severity.machinename);
     rsx! {
-        tr {
-            class: "alert whitespace-nowrap {severity_class}",
+        div {
+            class: "alert flex whitespace-nowrap {severity_class} {pinned_class}",
             onclick: {
                 let id = id.clone();
                 move |_| on_click.call(id.clone())
@@ -28,12 +31,11 @@ pub fn AlertComponent(
                 let id = id.clone();
                 move |_| on_mouse_leave.call(id.clone())
             },
-            td { class: "p-1",
+            div { class: "p-1 flex-none",
                 a { href: alert.link, target: "_blank", "🔍" }
             }
-            td { class: "p-1 {pinned_class}", "{alert.title}" }
-            td { class: "p-1 truncate", "{alert.summary}" }
-
+            div { class: "p-1 flex-none", "{alert.title}" }
+            div { class: "p-1 flex-1 min-w-0 truncate", "{alert.summary}" }
         }
     }
 }
@@ -52,7 +54,7 @@ pub fn AlertList(
 
     rsx! {
         div { class: "overflow-x-scroll overflow-y-scroll pt-12",
-            table { class: "border-separate border-spacing-0 table-auto min-w-full",
+            div { class: "min-w-full",
                 for alert in sorted_alerts {
                     AlertComponent {
                         alert: alert.clone(),
@@ -64,6 +66,5 @@ pub fn AlertList(
                 }
             }
         }
-
     }
 }
