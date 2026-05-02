@@ -8,7 +8,7 @@ config = "0.15.19"
 serde = { version = "1.0.228", features = ["derive"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 dioxus = { version = "0.7.1", features = [] }
-reqwest = { version = "0.12.24", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 tokio = {version="1.48.0", features = ["macros","time"]}
 async-trait = "0.1.89"
 futures = "0.3"
@@ -17,7 +17,7 @@ thiserror = "2.0.18"
 tracing = "0.1.44"
 dioxus-logger = "0.7.4"
 toml = "1.1.2"
-directories = "5"
+directories = "6"
 url = "2.5.8"
 notify-rust = "4"
 image = "0.25.10"
@@ -34,6 +34,7 @@ mac-notification-sys = "0.6"
 # Proper WinRT toast notifications: sound selection, duration, attribution text, app ID.
 winrt-toast-reborn = "0.3"
 
+tray-icon = "0.22"
 [features]
 default = ["desktop"]
 desktop = ["dioxus/desktop"]

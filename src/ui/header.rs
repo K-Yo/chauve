@@ -23,9 +23,6 @@ fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Eleme
                     let poller = poller_signal.read().clone();
                     spawn(async move {
                         if let Ok(data) = poller.poll_once().await {
-                            crate::notifications::send_notification(
-                                &data.clone().alerts.pop().unwrap(),
-                            );
                             let mut write_poller = poller_signal.write();
                             write_poller.update_with(data);
                         }
@@ -46,10 +43,10 @@ fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Eleme
 
 #[component]
 pub fn AlertDetails(alert: Alert, unpin: EventHandler) -> Element {
-    rsx!{
+    // TODO: unpin when clicking an "×" in the corner
+    rsx! {
         div {
             class: "scroll-auto whitespace-pre-wrap",
-            onclick: move |_| unpin.call(()),
             "{alert.description}"
         }
 

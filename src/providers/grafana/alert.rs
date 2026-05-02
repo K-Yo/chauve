@@ -41,9 +41,7 @@ impl ProviderAlert for GrafanaAlert {
     }
 
     fn title(&self) -> Option<String> {
-        self.labels
-            .get("alertname")
-            .cloned()
+        self.labels.get("alertname").cloned()
     }
 
     fn link(&self) -> Option<String> {
@@ -51,15 +49,11 @@ impl ProviderAlert for GrafanaAlert {
     }
 
     fn description(&self) -> Option<String> {
-        self.annotations.clone()?
-        .get("description")
-        .cloned()
+        self.annotations.clone()?.get("description").cloned()
     }
 
     fn summary(&self) -> Option<String> {
-        self.annotations.clone()?
-        .get("summary")
-        .cloned()
+        self.annotations.clone()?.get("summary").cloned()
     }
 }
 

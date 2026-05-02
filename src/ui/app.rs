@@ -6,6 +6,8 @@ use crate::notifications;
 use crate::poller::Poller;
 use crate::settings::get_settings;
 use crate::ui::header::Header;
+use crate::ui::tray;
+use dioxus::desktop::trayicon::TrayIcon;
 use dioxus::prelude::*;
 use std::collections::HashSet;
 use tokio::time::Duration;
@@ -16,6 +18,7 @@ const MAIN_CSS: &str = include_str!("../../assets/main.css");
 #[component]
 pub fn AlertsApp() -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
+    let mut tray_icon_signal: Signal<TrayIcon> = use_context();
     let settings_signal: Signal<Settings> = use_context();
 
     use_coroutine::<(), _, _>(move |_| async move {
@@ -46,12 +49,17 @@ pub fn AlertsApp() -> Element {
                     }
                     first_poll = false;
                     seen_ids.extend(data.alerts.iter().map(|a| a.id.clone()));
+                    let _ = tray_icon_signal.with_mut(|t| {
+                        t.set_icon(Some(tray::generate_severity_icon(&data.alerts)));
+                        t.set_tooltip(tray::generate_tooltip(&data.alerts));
+                    });
                     poller_signal.write().update_with(data);
                 }
                 Err(stats) => {
                     tracing::warn!("Poll failed: {}", stats);
                 }
             }
+            // tray_icon_signal.with_mut(|t| t.set_tooltip("coucou".into()).expect(""));
 
             let poll_frequency = settings_signal.read().poll_frequency;
             tokio::time::sleep(Duration::from_secs(poll_frequency)).await;
@@ -101,6 +109,7 @@ pub fn AlertsApp() -> Element {
 
 #[component]
 pub fn App() -> Element {
+    let _ = tray::init();
     let settings = get_settings();
     // Provide settings first (cloned), then consume original for Poller.
     use_context_provider(|| Signal::new(settings.clone()));

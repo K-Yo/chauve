@@ -1,7 +1,5 @@
 //! Entities related to alerts
 
-use std::fmt::Display;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alert {
     pub id: String,
@@ -12,11 +10,11 @@ pub struct Alert {
     pub link: String,
 }
 
-
 fn to_machinename(input: &str) -> String {
-    input.chars()
-         .filter(|c| c.is_ascii() && ! c.is_whitespace())
-         .collect()
+    input
+        .chars()
+        .filter(|c| c.is_ascii() && !c.is_whitespace())
+        .collect()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,7 +27,7 @@ impl Default for Severity {
     fn default() -> Severity {
         Severity {
             machinename: String::from("unknown"),
-            icon: String::from("❔")
+            icon: String::from("❔"),
         }
     }
 }
@@ -50,7 +48,7 @@ impl Severity {
     pub fn new(sev: String) -> Severity {
         Severity {
             machinename: to_machinename(&sev),
-            icon: String::from("⛔")
+            icon: String::from("⛔"),
         }
     }
 
