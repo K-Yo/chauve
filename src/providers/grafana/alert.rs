@@ -55,6 +55,10 @@ impl ProviderAlert for GrafanaAlert {
     fn summary(&self) -> Option<String> {
         self.annotations.clone()?.get("summary").cloned()
     }
+
+    fn instance(&self) -> Option<String> {
+        self.labels.get("instance").cloned()
+    }
 }
 
 #[derive(Debug, Deserialize)]

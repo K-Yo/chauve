@@ -21,6 +21,9 @@ pub trait ProviderAlert {
     fn summary(&self) -> Option<String> {
         None
     }
+    fn instance(&self) -> Option<String> {
+        None
+    }
 }
 
 pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
@@ -32,6 +35,7 @@ pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
         link: provider_alert.link().unwrap_or_default(),
         description: provider_alert.description().unwrap_or_default(),
         summary: provider_alert.summary().unwrap_or_default(),
+        instance: provider_alert.instance().unwrap_or_default(),
     }
 }
 

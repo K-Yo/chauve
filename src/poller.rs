@@ -210,6 +210,7 @@ mod tests {
                         link: format!("http://provider{}/alert1", self.id),
                         description: "".to_string(),
                         summary: "".to_string(),
+                        instance: "".to_string(),
                     },
                     Alert {
                         id: format!("2"),
@@ -218,6 +219,7 @@ mod tests {
                         link: format!("http://provider{}/alert2", self.id),
                         description: "".to_string(),
                         summary: "".to_string(),
+                        instance: "".to_string(),
                     },
                 ])
             }
