@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::str;
+
 use dioxus::desktop::trayicon::menu::{Menu, MenuItem, PredefinedMenuItem};
 use dioxus::desktop::trayicon::{Icon, TrayIcon, TrayIconBuilder};
 use dioxus::desktop::{icon_from_memory, use_muda_event_handler};
@@ -61,7 +64,7 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 /// # Returns
 ///
 /// A `Vec<(&'static str, usize)>` where each pair is `(severity_name, count)`.
-fn count_by_severity(alerts: &[Alert]) -> Vec<(&'static str, usize)> {
+fn count_by_severity(alerts: &[Alert]) -> HashMap<String, u32> {
     let mut critical = 0;
     let mut high = 0;
     let mut medium = 0;
@@ -77,12 +80,12 @@ fn count_by_severity(alerts: &[Alert]) -> Vec<(&'static str, usize)> {
         }
     }
 
-    vec![
-        ("critical", critical),
-        ("high", high),
-        ("medium", medium),
-        ("low", low),
-    ]
+    let mut result = HashMap::new();
+    result.insert("critical".to_string(), critical);
+    result.insert("high".to_string(), high);
+    result.insert("medium".to_string(), medium);
+    result.insert("low".to_string(), low);
+    result
 }
 
 /// Generates a tray icon with colored corner badges indicating active alerts by severity.
@@ -96,12 +99,7 @@ fn count_by_severity(alerts: &[Alert]) -> Vec<(&'static str, usize)> {
 /// A badge is drawn only when there is at least one alert for that severity. When no alerts
 /// are present the original icon is returned unchanged.
 pub fn generate_severity_icon(alerts: &[Alert]) -> Icon {
-    let counts = count_by_severity(alerts);
-    let has_any = counts.iter().any(|(_, c)| *c > 0);
-
-    if !has_any {
-        return icon_from_memory(icon_bytes()).expect("valid icon");
-    }
+    let severity_counts = count_by_severity(alerts);
 
     let base_img = image::load_from_memory(icon_bytes())
         .expect("valid icon")
@@ -111,30 +109,26 @@ pub fn generate_severity_icon(alerts: &[Alert]) -> Icon {
 
     let badge_size = (width.min(height) / 4).max(4);
 
-    let colors = [
-        Rgba([0x78, 0x00, 0x00, 0xFF]), // critical
-        Rgba([0xC1, 0x12, 0x1F, 0xFF]), // high
-        Rgba([0xFB, 0x85, 0x00, 0xFF]), // medium
-        Rgba([0xFF, 0xC3, 0x00, 0xFF]), // low
-    ];
-
-    let corners = [
-        (0u32, 0u32),                              // top-left
-        (width.saturating_sub(badge_size), 0u32),  // top-right
-        (0u32, height.saturating_sub(badge_size)), // bottom-left
-        (
-            width.saturating_sub(badge_size),
-            height.saturating_sub(badge_size),
-        ), // bottom-right
-    ];
-
-    for i in 0..4 {
-        let (_, count) = counts[i];
+    for severity_name in vec!["critical", "high", "medium", "low"] {
+        let count = severity_counts[severity_name];
         if count == 0 {
             continue;
         }
-        let color = colors[i];
-        let (cx, cy) = corners[i];
+        let color = match severity_name {
+            "critical" => Rgba([0x78, 0x00, 0x00, 0xFF]),
+            "high" => Rgba([0xC1, 0x12, 0x1F, 0xFF]),
+            "medium" => Rgba([0xFB, 0x85, 0x00, 0xFF]),
+            _ => Rgba([0xFF, 0xC3, 0x00, 0xFF]),
+        };
+        let (cx, cy) = match severity_name {
+            "critical" => (0u32, 0u32),                            // top-left
+            "high" => (width.saturating_sub(badge_size), 0u32),    // top-right
+            "medium" => (0u32, height.saturating_sub(badge_size)), // bottom-left
+            _ => (
+                width.saturating_sub(badge_size),
+                height.saturating_sub(badge_size),
+            ),
+        };
 
         for dy in 0..badge_size {
             for dx in 0..badge_size {
@@ -150,4 +144,27 @@ pub fn generate_severity_icon(alerts: &[Alert]) -> Icon {
 
     let rgba = img.into_raw();
     Icon::from_rgba(rgba, width, height).expect("valid icon")
+}
+
+pub fn generate_tooltip(alerts: &[Alert]) -> Option<String> {
+    let counts = count_by_severity(alerts);
+    let parts: Vec<String> = ["critical", "high", "medium", "low"]
+        .iter()
+        .filter_map(|severity_name| {
+            let count = counts[*severity_name];
+            if count == 0 {
+                return None;
+            }
+            let shortname = match *severity_name {
+                "critical" => "Crit",
+                "high" => "High",
+                "medium" => "Med",
+                "low" => "Low",
+                _ => "Other",
+            };
+            Some(format!("{} {}", count, shortname))
+        })
+        .collect();
+
+    Some(parts.join(" / "))
 }
