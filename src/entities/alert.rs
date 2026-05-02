@@ -8,6 +8,7 @@ pub struct Alert {
     pub description: String,
     pub summary: String,
     pub link: String,
+    pub instance: String,
 }
 
 fn to_machinename(input: &str) -> String {
