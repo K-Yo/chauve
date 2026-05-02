@@ -34,7 +34,6 @@ mac-notification-sys = "0.6"
 # Proper WinRT toast notifications: sound selection, duration, attribution text, app ID.
 winrt-toast-reborn = "0.3"
 
-tray-icon = "0.22"
 [features]
 default = ["desktop"]
 desktop = ["dioxus/desktop"]

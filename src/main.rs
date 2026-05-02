@@ -8,12 +8,12 @@ mod settings;
 mod ui;
 
 use crate::{register::icon_bytes, ui::app::App};
+use dioxus::desktop::trayicon::dpi::LogicalSize;
 use dioxus::{
     desktop::{WindowBuilder, tao::window::Icon},
     prelude::*,
 };
 use tracing::Level;
-use tray_icon::dpi::LogicalSize;
 
 fn main() {
     dioxus_logger::init(Level::DEBUG).expect("logger failed to init");
