@@ -118,7 +118,7 @@ jobs:
 
           # macOS: compress .app bundle into a versioned zip
           cd artifacts/chauve-macos-arm64
-          zip -r ../../release-assets/chauve-macos-arm64-${TAG}.zip Chauve.app
+          zip -r ../../release-assets/chauve-macos-arm64-${TAG}.zip *
           cd ../../
 
       - name: Create GitHub Release
