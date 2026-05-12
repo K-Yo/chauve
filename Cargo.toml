@@ -9,7 +9,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 dioxus = { version = "0.7.7", features = [] }
 reqwest = { version = "0.13", features = ["json"] }
-tokio = {version="1.52.2", features = ["macros","time"]}
+tokio = {version="1.52.3", features = ["macros","time"]}
 async-trait = "0.1.89"
 futures = "0.3"
 anyhow = "1.0.102"
