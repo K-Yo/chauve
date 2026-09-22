@@ -27,6 +27,11 @@ npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --watch
 # Release build
 dx build --release --platform desktop
 npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --minify
+
+# Packaged macOS installer (what CI ships): writes dist/Chauve_<version>_<arch>.dmg.
+# Needed instead of `dx build` because only `dx bundle` fills in Contents/Resources
+# (the app icon) and ad-hoc signs the bundle.
+dx bundle --release --platform desktop --package-types dmg --out-dir dist
 ```
 
 Dioxus CLI must be installed: run `./scripts/install-dx.sh`. It installs `dx` at exactly the resolved `dioxus` version — `dx` refuses to build against any other version.
@@ -56,12 +61,12 @@ The codebase is layered with strict separation of concerns:
 
 ## Configuration
 
-`Settings.toml` at the project root configures provider instances. Multiple Grafana instances are supported:
+`Settings.toml` lives in the OS config dir (`~/Library/Application Support/chauve/` on macOS, `~/.config/chauve/` on Linux, `%APPDATA%\chauve\` on Windows) and is created with defaults on first launch — see `config_dir()` in `src/settings.rs`. Multiple Grafana instances are supported:
 
 ```toml
 poll_frequency = 5  # seconds
 
-[[grafana]]
+[[providers.grafana]]
 url = "https://grafana.example.com"
 token = "glsa_..."
 ```

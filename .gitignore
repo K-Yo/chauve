@@ -22,3 +22,6 @@ target
 
 # Generated CSS files
 assets/main.css
+
+# Packaged installers written by `dx bundle --out-dir dist`
+dist
