@@ -52,7 +52,7 @@ pub fn AlertsApp() -> Element {
                     }
                     first_poll = false;
                     seen_ids.extend(data.alerts.iter().map(|a| a.id.clone()));
-                    let _ = tray_icon_signal.with_mut(|t| {
+                    tray_icon_signal.with_mut(|t| {
                         // update icon
                         let _ = t.set_icon(Some(tray::generate_severity_icon(&data.alerts)));
                         // update tooltip

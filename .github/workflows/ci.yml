@@ -1,0 +1,86 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Format, lint & test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # cargo check/test compile the desktop webview stack, so the same system
+      # libraries the release build needs are required here too.
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config build-essential curl wget file \
+            libglib2.0-dev libgtk-3-dev \
+            libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev libsoup-3.0-dev \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev lld
+
+      - name: Verify Linux system dependencies
+        run: pkg-config --modversion glib-2.0 gtk+-3.0 javascriptcoregtk-4.1 libsoup-3.0
+
+      # `dx` only runs against the exact dioxus version it was built for, and the
+      # release build derives its dx version from the resolved dioxus version.
+      # Guard the two ways that can still go wrong on a dependency bump.
+      - name: Verify dioxus pin and matching CLI release
+        shell: bash
+        run: |
+          req=$(grep -m1 '^dioxus = ' Cargo.toml | sed -n 's/.*version = "\([^"]*\)".*/\1/p')
+          resolved=$(cargo pkgid dioxus | awk -F'@' '{print $NF}')
+
+          # A caret requirement lets Cargo.lock drift to a version no installed
+          # dx matches, which is how dx/dioxus skew gets merged unnoticed.
+          if [ "$req" != "=$resolved" ]; then
+            echo "::error file=Cargo.toml::dioxus must be pinned exactly to the resolved version: requirement is '$req', resolved is '$resolved' (expected '=$resolved')"
+            exit 1
+          fi
+
+          # dioxus and dioxus-cli release in lockstep, but not atomically: fail
+          # here rather than at release time if the CLI is not published yet.
+          status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -A 'chauve-ci (https://github.com/K-Yo/chauve)' \
+            "https://crates.io/api/v1/crates/dioxus-cli/$resolved")
+          if [ "$status" != "200" ]; then
+            echo "::error::dioxus-cli $resolved is not published on crates.io (HTTP $status); the release build cannot install a matching dx"
+            exit 1
+          fi
+          echo "dioxus $resolved pinned exactly, dioxus-cli $resolved published."
+
+      # src/ui/app.rs include_str!s assets/main.css, a gitignored Tailwind
+      # artifact. Lint and tests only need the file to exist, not its contents,
+      # so create it empty instead of spending a Node + Tailwind run on it.
+      - name: Stub generated Tailwind CSS
+        run: touch assets/main.css
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Run clippy
+        run: cargo clippy --features desktop -- -D warnings
+
+      - name: Run tests
+        run: cargo test --features desktop

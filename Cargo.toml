@@ -7,7 +7,10 @@ edition = "2024"
 config = "0.15.19"
 serde = { version = "1.0.228", features = ["derive"] }
 chrono = { version = "0.4.42", features = ["serde"] }
-dioxus = { version = "0.7.7", features = [] }
+# Pinned exactly: `dx` (dioxus-cli) refuses to build unless its own version
+# matches this crate's exactly, so a lockfile-only bump would break every `dx`
+# invocation. After bumping, run ./scripts/install-dx.sh.
+dioxus = { version = "=0.7.10", features = [] }
 reqwest = { version = "0.13", features = ["json"] }
 tokio = {version="1.52.3", features = ["macros","time"]}
 async-trait = "0.1.89"

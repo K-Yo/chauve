@@ -10,3 +10,13 @@ identifier = "com.github.k-yo.chauve"
 category = "Utility"
 short_description = "Chauve, a notification monitor"
 icon = ["assets/icons/icon.ico", "assets/icons/icon.icns", "assets/icons/icon.png"]
+
+[bundle.macos]
+# Ad-hoc signature ("-"): seals the whole bundle — executable, Info.plist and
+# Resources — with no certificate. Without it only the bare executable carries
+# the linker's automatic signature, and Apple Silicon kills bundles whose seal
+# is missing or broken ("Chauve is damaged and can't be opened").
+# This is not notarization: Gatekeeper still blocks the first launch, see the
+# install instructions in README.md. `dx` prefers the APPLE_CERTIFICATE env var
+# over this value, so adding a Developer ID later needs no change here.
+signing_identity = "-"

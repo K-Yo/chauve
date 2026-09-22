@@ -113,7 +113,7 @@ pub fn generate_severity_icon(alerts: &[Alert]) -> Icon {
 
     let badge_size = (width.min(height) / 4).max(4);
 
-    for severity_name in vec!["critical", "high", "medium", "low"] {
+    for severity_name in ["critical", "high", "medium", "low"] {
         let count = severity_counts[severity_name];
         if count == 0 {
             continue;

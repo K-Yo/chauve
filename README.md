@@ -4,14 +4,41 @@
 
 An alert notification system for monitoring and visualizing alerts from various monitoring platforms. Built with Rust and Dioxus, chauve provides a clean, responsive interface for aggregating and displaying alerts from multiple sources.
 
+## Install
+
+Grab the latest assets from the [Releases page](https://github.com/K-Yo/chauve/releases).
+
+### macOS (Apple Silicon)
+
+1. Download `chauve-macos-arm64-vX.Y.Z.dmg`.
+2. Open it and drag **Chauve** into the Applications folder.
+3. The app is ad-hoc signed but not notarized — Apple charges $99/yr for that — so
+   Gatekeeper blocks the first launch with *"Apple could not verify Chauve is free of
+   malware"*. Clear the download quarantine flag once:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Chauve.app
+   ```
+   Alternatively, try to open the app, then go to **System Settings → Privacy &
+   Security** and click **Open Anyway**. (On macOS 15 and later, right-click → Open no
+   longer bypasses this.)
+4. Launch Chauve, then configure your providers — see [Configuration](#configuration).
+
+### Linux / Windows
+
+The release assets are plain executables (`chauve-linux-amd64-vX.Y.Z` and
+`chauve-windows-amd64-vX.Y.Z.exe`); download, make executable if needed, and run.
+
 ## Quickstart
 
 1. Install Rust (1.70+ recommended)
 2. Clone this repository
-3. Install [Dioxus CLI](https://dioxuslabs.com/docs/0.4/cli/index.html):
+3. Install the [Dioxus CLI](https://dioxuslabs.com/docs/0.4/cli/index.html). `dx` only works with
+   the exact `dioxus` version this project pins, so use the script — it reads that version and
+   installs the matching `dx`:
    ```bash
-   cargo install dioxus-cli
+   ./scripts/install-dx.sh
    ```
+   Re-run it whenever the `dioxus` dependency is bumped.
 4. Start the development app:
    ```bash
    dx serve --desktop
@@ -24,15 +51,32 @@ An alert notification system for monitoring and visualizing alerts from various 
 
 ## Configuration
 
-Configure your alert providers in `Settings.toml`. Currently, Grafana is supported as a provider:
+Chauve reads `Settings.toml` from the OS config directory, creating it with defaults on
+first launch:
+
+| OS      | Path                                              |
+| ------- | ------------------------------------------------- |
+| macOS   | `~/Library/Application Support/chauve/Settings.toml` |
+| Linux   | `~/.config/chauve/Settings.toml`                   |
+| Windows | `%APPDATA%\chauve\Settings.toml`                   |
+
+Currently, Grafana is supported as a provider:
 
 ```toml
-[grafana]
+poll_frequency = 5 # seconds
+
+[notifications]
+enabled = true
+min_severity = "high" # critical, high, medium or low
+
+[[providers.grafana]]
 url = "https://your-grafana-instance.com"
 token = "your-api-token"
 ```
 
-You can configure multiple Grafana instances by adding multiple entries.
+You can configure multiple Grafana instances by adding multiple
+`[[providers.grafana]]` entries. Every key can also be set through `APP_`-prefixed
+environment variables.
 
 ## Code Organization
 

@@ -1,4 +1,6 @@
-use crate::settings::{AUMID, config_dir};
+#[cfg(target_os = "windows")]
+use crate::settings::AUMID;
+use crate::settings::config_dir;
 use std::{fs::File, io::Write};
 
 pub fn register_app() {

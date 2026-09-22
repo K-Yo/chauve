@@ -9,8 +9,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  # Keep in sync with the `dioxus` dependency in Cargo.toml.
-  DIOXUS_CLI_VERSION: "0.7.7"
 
 jobs:
   build:
@@ -30,7 +28,7 @@ jobs:
             asset_path: target/dx/chauve/release/windows/app/chauve.exe
           - os: macos-latest
             asset_name: chauve-macos-arm64
-            asset_path: target/dx/chauve/release/macos/Chauve.app
+            asset_path: dist/chauve-macos-arm64.dmg
 
     steps:
       - name: Checkout
@@ -75,12 +73,19 @@ jobs:
         run: pkg-config --modversion glib-2.0 gtk+-3.0 javascriptcoregtk-4.1 libsoup-3.0
 
       # ── Dioxus CLI ──────────────────────────────────────────────────
+      # dx must match the dioxus crate exactly, so read the version from the
+      # resolved dependency graph: a dependabot bump can never leave this stale.
+      - name: Resolve Dioxus CLI version
+        id: dx
+        shell: bash
+        run: echo "version=$(cargo pkgid dioxus | awk -F'@' '{print $NF}')" >> "$GITHUB_OUTPUT"
+
       # Downloads the prebuilt `dx` binary published with each Dioxus release
       # instead of building it from source (which took 9-19 min per job).
       - name: Install Dioxus CLI
         uses: taiki-e/install-action@v2
         with:
-          tool: dioxus-cli@${{ env.DIOXUS_CLI_VERSION }}
+          tool: dioxus-cli@${{ steps.dx.outputs.version }}
 
       # ── Node + Tailwind CSS ─────────────────────────────────────────
       - name: Setup Node.js
@@ -100,8 +105,23 @@ jobs:
 
       # ── Build ───────────────────────────────────────────────────────
       - name: Build desktop app
+        if: runner.os != 'macOS'
         shell: bash
         run: dx build --release --platform desktop
+
+      # macOS ships a .dmg rather than the .app `dx build` leaves behind:
+      # upload-artifact strips the top-level directory, so an .app never
+      # survives the round trip, and `dx build` writes no Contents/Resources
+      # (hence no icon). `dx bundle` fills in Resources and stages the .dmg
+      # with an /Applications symlink for drag-to-install.
+      - name: Bundle macOS app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          dx bundle --release --platform desktop --package-types dmg --out-dir dist
+          # dx names it Chauve_<version>_aarch64.dmg; a fixed name keeps the
+          # release job free of version-dependent globbing.
+          mv dist/*.dmg dist/chauve-macos-arm64.dmg
 
       # ── Locate & upload artifact ────────────────────────────────────
       - name: Upload artifact
@@ -137,10 +157,8 @@ jobs:
           # Windows: rename .exe to include version
           cp artifacts/chauve-windows-amd64/chauve.exe release-assets/chauve-windows-amd64-${TAG}.exe
 
-          # macOS: compress .app bundle into a versioned zip
-          cd artifacts/chauve-macos-arm64
-          zip -r ../../release-assets/chauve-macos-arm64-${TAG}.zip *
-          cd ../../
+          # macOS: the build job already produced a .dmg, just version its name
+          cp artifacts/chauve-macos-arm64/chauve-macos-arm64.dmg release-assets/chauve-macos-arm64-${TAG}.dmg
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
