@@ -59,6 +59,10 @@ impl ProviderAlert for GrafanaAlert {
     fn instance(&self) -> Option<String> {
         self.labels.get("instance").cloned()
     }
+
+    fn starts_at(&self) -> Option<DateTime<Utc>> {
+        Some(self.starts_at)
+    }
 }
 
 #[derive(Debug, Deserialize)]

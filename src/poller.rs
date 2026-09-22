@@ -211,6 +211,7 @@ mod tests {
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
+                        starts_at: None,
                     },
                     Alert {
                         id: format!("2"),
@@ -220,6 +221,7 @@ mod tests {
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
+                        starts_at: Some(Utc::now() - chrono::Duration::hours(2)),
                     },
                 ])
             }

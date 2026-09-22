@@ -1,5 +1,6 @@
 use crate::entities::alert::{Alert, Severity};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 /// An alert for a provider
 pub trait ProviderAlert {
@@ -24,6 +25,10 @@ pub trait ProviderAlert {
     fn instance(&self) -> Option<String> {
         None
     }
+    /// When the alert started firing, if the provider reports it.
+    fn starts_at(&self) -> Option<DateTime<Utc>> {
+        None
+    }
 }
 
 pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
@@ -36,6 +41,7 @@ pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
         description: provider_alert.description().unwrap_or_default(),
         summary: provider_alert.summary().unwrap_or_default(),
         instance: provider_alert.instance().unwrap_or_default(),
+        starts_at: provider_alert.starts_at(),
     }
 }
 
