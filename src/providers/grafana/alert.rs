@@ -14,12 +14,6 @@ pub struct GrafanaAlert {
     #[serde(rename = "startsAt")]
     pub starts_at: DateTime<Utc>,
 
-    #[serde(rename = "updatedAt")]
-    pub updated_at: DateTime<Utc>,
-
-    #[serde(default, rename = "endsAt")]
-    pub ends_at: Option<DateTime<Utc>>,
-
     pub status: AlertStatus,
 
     pub fingerprint: String,
@@ -33,9 +27,7 @@ impl ProviderAlert for GrafanaAlert {
         self.fingerprint.clone()
     }
     fn severity(&self) -> Option<Severity> {
-        let Some(severity_str) = self.labels.get("severity") else {
-            return None;
-        };
+        let severity_str = self.labels.get("severity")?;
 
         Some(Severity::new(severity_str.to_string()))
     }

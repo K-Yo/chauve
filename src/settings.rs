@@ -4,7 +4,10 @@ use std::path::PathBuf;
 
 use crate::entities::settings::Settings;
 
+/// App User Model ID, only used to register Windows toast notifications.
+#[cfg(target_os = "windows")]
 pub const AUMID: &str = "com.github.k-yo.chauve";
+
 /// Path on the image for notifications
 pub fn toast_image_path() -> PathBuf {
     config_dir().join("fire_extinguisher.png")

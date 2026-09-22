@@ -44,7 +44,11 @@ impl fmt::Display for PollStats {
             f,
             "{} providers succeeded, {} failed out of {}",
             self.success_count, self.error_count, self.total_providers
-        )
+        )?;
+        if !self.errors.is_empty() {
+            write!(f, ": {}", self.errors.join("; "))?;
+        }
+        Ok(())
     }
 }
 
@@ -94,23 +98,19 @@ impl Poller {
             }
         }
 
-        let error_count = total - success_count;
-
-        let stats = PollStats {
-            success_count,
-            error_count,
-            total_providers: total,
-            errors,
-        };
-
         let data = PollerData {
             alerts: all_alerts,
             last_poll_time: now,
-            stats: stats.clone(),
+            stats: PollStats {
+                success_count,
+                error_count: total - success_count,
+                total_providers: total,
+                errors,
+            },
         };
 
-        if error_count > 0 {
-            warn!(target: "poller", "Poll completed with issues: {}", stats);
+        if data.stats.error_count > 0 {
+            warn!(target: "poller", "Poll completed with issues: {}", data.stats);
         }
 
         Ok(data)
