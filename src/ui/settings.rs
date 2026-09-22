@@ -118,8 +118,9 @@ pub fn SettingsView() -> Element {
                             return;
                         }
                     }
-                    // Rebuild the poller with the new provider list.
-                    *poller_signal.write() = Poller::new(new_settings.clone());
+                    // Swap in the new provider list, keeping cached alerts so the
+                    // view doesn't blank out until the next poll lands.
+                    poller_signal.write().reload_providers(new_settings.clone());
                     // Update the global settings signal — the coroutine reads
                     // poll_frequency from this on the next sleep iteration.
                     *settings_signal.write() = new_settings;

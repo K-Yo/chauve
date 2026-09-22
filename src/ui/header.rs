@@ -14,9 +14,11 @@ fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
         div { class: "flex-none flex gap-1 p-1",
             button {
                 onclick: move |_| {
-                    // Re-read settings from disk and rebuild the poller.
+                    // Re-read settings from disk and rebuild the provider list.
+                    // Keep the cached alerts so the list isn't blanked while the
+                    // fresh poll is in flight — update_with() swaps them atomically.
                     let new_settings = get_settings();
-                    *poller_signal.write() = Poller::new(new_settings.clone());
+                    poller_signal.write().reload_providers(new_settings.clone());
                     *settings_signal.write() = new_settings;
 
                     let poller = poller_signal.read().clone();

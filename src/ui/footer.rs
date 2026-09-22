@@ -29,7 +29,7 @@ pub fn Footer(last_poll_time: Option<DateTime<Utc>>) -> Element {
 
     rsx! {
         div {
-            class: "fixed bottom-0 right-0 left-0 h-6 p-1 flex justify-between text-sm text-gray-300 tabular-nums",
+            class: "fixed bottom-0 right-0 left-0 h-6 p-1 flex justify-between text-sm text-gray-900 tabular-nums",
             span { title: "{title}", "{label}" }
             span { "v{VERSION}" }
         }
