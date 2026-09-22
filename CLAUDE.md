@@ -29,11 +29,11 @@ dx build --release --platform desktop
 npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --minify
 ```
 
-Dioxus CLI must be installed: `cargo install dioxus-cli`
+Dioxus CLI must be installed: run `./scripts/install-dx.sh`. It installs `dx` at exactly the resolved `dioxus` version — `dx` refuses to build against any other version.
 
 ## Architecture
 
-Dioxus version: **0.7.1**. Check `Cargo.toml` before using APIs — Dioxus has breaking changes between versions.
+Dioxus version: **0.7.10**, pinned exactly (`=0.7.10`) in `Cargo.toml`. Check `Cargo.toml` before using APIs — Dioxus has breaking changes between versions. The pin is exact because `dx` must match the crate version; both CI (`.github/workflows/release.yml`) and `scripts/install-dx.sh` derive the `dx` version from `cargo pkgid dioxus`, so after a bump re-run the script.
 
 The codebase is layered with strict separation of concerns:
 

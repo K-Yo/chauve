@@ -8,10 +8,13 @@ An alert notification system for monitoring and visualizing alerts from various 
 
 1. Install Rust (1.70+ recommended)
 2. Clone this repository
-3. Install [Dioxus CLI](https://dioxuslabs.com/docs/0.4/cli/index.html):
+3. Install the [Dioxus CLI](https://dioxuslabs.com/docs/0.4/cli/index.html). `dx` only works with
+   the exact `dioxus` version this project pins, so use the script — it reads that version and
+   installs the matching `dx`:
    ```bash
-   cargo install dioxus-cli
+   ./scripts/install-dx.sh
    ```
+   Re-run it whenever the `dioxus` dependency is bumped.
 4. Start the development app:
    ```bash
    dx serve --desktop
