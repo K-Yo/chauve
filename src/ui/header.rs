@@ -4,14 +4,13 @@ use crate::poller::Poller;
 use crate::settings::get_settings;
 use dioxus::prelude::*;
 
+/// Always-visible actions in the top-right corner.
 #[component]
-fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Element {
+fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
     let mut settings_signal: Signal<Settings> = use_context();
 
     rsx! {
-        "last poll time: {last_poll_time}"
-
         div { class: "fixed top-0 right-0 flex gap-1 p-1",
             button {
                 onclick: move |_| {
@@ -57,7 +56,6 @@ pub fn AlertDetails(alert: Alert, unpin: EventHandler) -> Element {
 pub fn Header(
     active_alert: Option<Alert>,
     is_pinned: bool,
-    last_poll_time: String,
     unpin: EventHandler,
     on_settings_toggle: EventHandler,
 ) -> Element {
@@ -68,9 +66,10 @@ pub fn Header(
                     AlertDetails { alert: alert.clone(), unpin }
                 },
                 None => rsx! {
-                    LastUpdate { last_poll_time, on_settings_toggle }
+                    div { class: "text-gray-300", "Select an alert for detail." }
                 },
             }
         }
+        HeaderActions { on_settings_toggle }
     }
 }

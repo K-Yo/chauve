@@ -121,11 +121,9 @@ impl Poller {
         self.last_poll_time = Some(data.last_poll_time);
     }
 
-    pub fn last_poll_time(&self) -> String {
-        match self.last_poll_time {
-            Some(date) => date.to_rfc3339(),
-            _ => "Never".to_string(),
-        }
+    /// When the last successful poll happened, `None` until the first poll.
+    pub fn last_poll_time(&self) -> Option<DateTime<Utc>> {
+        self.last_poll_time
     }
 
     /// return alert list
@@ -259,7 +257,7 @@ mod tests {
         assert!(alerts[1].title.contains("provider 1"));
 
         // Check last poll time was updated
-        assert_ne!(poller.last_poll_time(), "Never");
+        assert!(poller.last_poll_time().is_some());
     }
 
     #[tokio::test]

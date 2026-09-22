@@ -5,6 +5,7 @@ use crate::entities::settings::Settings;
 use crate::notifications;
 use crate::poller::Poller;
 use crate::settings::get_settings;
+use crate::ui::footer::Footer;
 use crate::ui::header::Header;
 use crate::ui::tray;
 use dioxus::desktop::muda::MenuItem;
@@ -93,10 +94,10 @@ pub fn AlertsApp() -> Element {
             Header {
                 active_alert,
                 is_pinned: pinned_id().is_some(),
-                last_poll_time,
                 unpin: move |_| pinned_id.set(None),
                 on_settings_toggle: move |_| show_settings.set(!show_settings()),
             }
+            Footer { last_poll_time }
             if show_settings() {
                 SettingsView {}
             } else {

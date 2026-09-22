@@ -74,7 +74,7 @@ pub fn AlertList(
     let now = Utc::now();
 
     rsx! {
-        div { class: "overflow-x-scroll overflow-y-scroll pt-12",
+        div { class: "overflow-x-scroll overflow-y-scroll pt-12 pb-6",
             div { class: "min-w-full",
                 for alert in sorted_alerts {
                     AlertComponent {
