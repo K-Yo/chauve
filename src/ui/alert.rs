@@ -51,7 +51,7 @@ pub fn AlertComponent(
                 "{age}"
             }
             div { class: "p-1 flex-none font-semibold", "{alert.title}" }
-            div { class: "p-1 flex-none text-gray-500 text-sm", "{alert.instance}" }
+            div { class: "p-1 flex-none text-gray-300 text-sm", "{alert.instance}" }
 
             div { class: "p-1 flex-1 min-w-0 truncate", "{alert.summary}" }
         }
