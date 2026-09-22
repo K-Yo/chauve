@@ -11,7 +11,7 @@ fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
     let mut settings_signal: Signal<Settings> = use_context();
 
     rsx! {
-        div { class: "fixed top-0 right-0 flex gap-1 p-1",
+        div { class: "flex-none flex gap-1 p-1",
             button {
                 onclick: move |_| {
                     // Re-read settings from disk and rebuild the poller.
@@ -60,16 +60,19 @@ pub fn Header(
     on_settings_toggle: EventHandler,
 ) -> Element {
     rsx! {
-        div { class: "fixed top-0 right-0 left-0 overflow-y-scroll h-12 p-1",
-            match &active_alert {
-                Some(alert) => rsx! {
-                    AlertDetails { alert: alert.clone(), unpin }
-                },
-                None => rsx! {
-                    div { class: "text-gray-300", "Select an alert for detail." }
-                },
+        div { class: "fixed top-0 right-0 left-0 h-12 flex",
+            // Own column so alert details never render underneath the action buttons.
+            div { class: "flex-1 min-w-0 overflow-y-scroll p-1",
+                match &active_alert {
+                    Some(alert) => rsx! {
+                        AlertDetails { alert: alert.clone(), unpin }
+                    },
+                    None => rsx! {
+                        div { class: "text-gray-300", "Select an alert for detail." }
+                    },
+                }
             }
+            HeaderActions { on_settings_toggle }
         }
-        HeaderActions { on_settings_toggle }
     }
 }
