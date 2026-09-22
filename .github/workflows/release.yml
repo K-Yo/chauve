@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # The footer displays CARGO_PKG_VERSION, so a tag that disagrees with
       # Cargo.toml would ship a binary labelled with the wrong version.
