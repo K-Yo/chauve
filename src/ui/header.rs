@@ -4,20 +4,21 @@ use crate::poller::Poller;
 use crate::settings::get_settings;
 use dioxus::prelude::*;
 
+/// Always-visible actions in the top-right corner.
 #[component]
-fn LastUpdate(last_poll_time: String, on_settings_toggle: EventHandler) -> Element {
+fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
     let mut settings_signal: Signal<Settings> = use_context();
 
     rsx! {
-        "last poll time: {last_poll_time}"
-
-        div { class: "fixed top-0 right-0 flex gap-1 p-1",
+        div { class: "flex-none flex gap-1 p-1",
             button {
                 onclick: move |_| {
-                    // Re-read settings from disk and rebuild the poller.
+                    // Re-read settings from disk and rebuild the provider list.
+                    // Keep the cached alerts so the list isn't blanked while the
+                    // fresh poll is in flight — update_with() swaps them atomically.
                     let new_settings = get_settings();
-                    *poller_signal.write() = Poller::new(new_settings.clone());
+                    poller_signal.write().reload_providers(new_settings.clone());
                     *settings_signal.write() = new_settings;
 
                     let poller = poller_signal.read().clone();
@@ -57,20 +58,23 @@ pub fn AlertDetails(alert: Alert, unpin: EventHandler) -> Element {
 pub fn Header(
     active_alert: Option<Alert>,
     is_pinned: bool,
-    last_poll_time: String,
     unpin: EventHandler,
     on_settings_toggle: EventHandler,
 ) -> Element {
     rsx! {
-        div { class: "fixed top-0 right-0 left-0 overflow-y-scroll h-12 p-1",
-            match &active_alert {
-                Some(alert) => rsx! {
-                    AlertDetails { alert: alert.clone(), unpin }
-                },
-                None => rsx! {
-                    LastUpdate { last_poll_time, on_settings_toggle }
-                },
+        div { class: "fixed top-0 right-0 left-0 h-12 flex",
+            // Own column so alert details never render underneath the action buttons.
+            div { class: "flex-1 min-w-0 overflow-y-scroll p-1",
+                match &active_alert {
+                    Some(alert) => rsx! {
+                        AlertDetails { alert: alert.clone(), unpin }
+                    },
+                    None => rsx! {
+                        div { class: "text-gray-300", "Select an alert for detail." }
+                    },
+                }
             }
+            HeaderActions { on_settings_toggle }
         }
     }
 }

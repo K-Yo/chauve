@@ -121,11 +121,9 @@ impl Poller {
         self.last_poll_time = Some(data.last_poll_time);
     }
 
-    pub fn last_poll_time(&self) -> String {
-        match self.last_poll_time {
-            Some(date) => date.to_rfc3339(),
-            _ => "Never".to_string(),
-        }
+    /// When the last successful poll happened, `None` until the first poll.
+    pub fn last_poll_time(&self) -> Option<DateTime<Utc>> {
+        self.last_poll_time
     }
 
     /// return alert list
@@ -135,16 +133,27 @@ impl Poller {
         self.cached_alerts.clone()
     }
 
-    pub fn new(settings: Settings) -> Poller {
+    /// Swap the provider list for one built from new settings, keeping cached
+    /// alerts and the last poll time so the UI keeps showing data until the
+    /// next poll lands.
+    pub fn reload_providers(&mut self, settings: Settings) {
+        self.providers = Self::build_providers(settings);
+    }
+
+    fn build_providers(settings: Settings) -> Vec<Box<dyn Provider>> {
         // TODO: extend into a full builder instead of simple factory and avoid having provider types appear here.
         let mut all_providers: Vec<Box<dyn Provider>> = vec![];
         for grafana_settings in settings.providers.grafana {
             let provider = GrafanaProvider::new(grafana_settings.url, grafana_settings.token);
             all_providers.push(Box::new(provider));
         }
+        all_providers
+    }
+
+    pub fn new(settings: Settings) -> Poller {
         Poller {
             last_poll_time: None,
-            providers: all_providers,
+            providers: Self::build_providers(settings),
             cached_alerts: Vec::new(),
         }
     }
@@ -211,6 +220,7 @@ mod tests {
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
+                        starts_at: None,
                     },
                     Alert {
                         id: format!("2"),
@@ -220,6 +230,7 @@ mod tests {
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
+                        starts_at: Some(Utc::now() - chrono::Duration::hours(2)),
                     },
                 ])
             }
@@ -257,7 +268,7 @@ mod tests {
         assert!(alerts[1].title.contains("provider 1"));
 
         // Check last poll time was updated
-        assert_ne!(poller.last_poll_time(), "Never");
+        assert!(poller.last_poll_time().is_some());
     }
 
     #[tokio::test]
