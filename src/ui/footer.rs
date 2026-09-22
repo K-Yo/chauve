@@ -3,6 +3,10 @@ use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 use tokio::time::Duration;
 
+/// Crate version, baked in at build time. CI enforces that the release tag
+/// matches this, so it identifies the downloaded release.
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[component]
 pub fn Footer(last_poll_time: Option<DateTime<Utc>>) -> Element {
     // Ticks every second so the relative age stays current. Local to the footer
@@ -25,9 +29,9 @@ pub fn Footer(last_poll_time: Option<DateTime<Utc>>) -> Element {
 
     rsx! {
         div {
-            class: "fixed bottom-0 right-0 left-0 h-6 p-1 text-sm text-gray-300 tabular-nums",
-            title: "{title}",
-            "{label}"
+            class: "fixed bottom-0 right-0 left-0 h-6 p-1 flex justify-between text-sm text-gray-300 tabular-nums",
+            span { title: "{title}", "{label}" }
+            span { "v{VERSION}" }
         }
     }
 }

@@ -36,6 +36,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # The footer displays CARGO_PKG_VERSION, so a tag that disagrees with
+      # Cargo.toml would ship a binary labelled with the wrong version.
+      - name: Verify tag matches Cargo.toml version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          CARGO_VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          TAG=${{ github.ref_name }}
+          if [ "$TAG" != "v$CARGO_VERSION" ]; then
+            echo "::error::Tag $TAG does not match Cargo.toml version $CARGO_VERSION (expected v$CARGO_VERSION)"
+            exit 1
+          fi
+
       # ── Rust toolchain ──────────────────────────────────────────────
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
