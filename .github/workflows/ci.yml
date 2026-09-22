@@ -70,6 +70,12 @@ jobs:
           fi
           echo "dioxus $resolved pinned exactly, dioxus-cli $resolved published."
 
+      # src/ui/app.rs include_str!s assets/main.css, a gitignored Tailwind
+      # artifact. Lint and tests only need the file to exist, not its contents,
+      # so create it empty instead of spending a Node + Tailwind run on it.
+      - name: Stub generated Tailwind CSS
+        run: touch assets/main.css
+
       - name: Check formatting
         run: cargo fmt --check
 
