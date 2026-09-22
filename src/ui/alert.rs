@@ -1,6 +1,7 @@
 use crate::entities::alert::{Alert, format_age};
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
+use std::cmp::Reverse;
 
 #[component]
 pub fn AlertComponent(
@@ -66,9 +67,10 @@ pub fn AlertList(
     on_mouse_enter: EventHandler<String>,
     on_mouse_leave: EventHandler<String>,
 ) -> Element {
-    // Sort alerts by severity, with critical first
+    // Sort alerts by severity (critical first), then most recently started first.
+    // Alerts without a start time land last within their severity group.
     let mut sorted_alerts = alerts.clone();
-    sorted_alerts.sort_by_key(|alert| alert.severity.order());
+    sorted_alerts.sort_by_key(|alert| (alert.severity.order(), Reverse(alert.starts_at)));
 
     // One reference instant for the whole list so every row agrees on "now".
     let now = Utc::now();
