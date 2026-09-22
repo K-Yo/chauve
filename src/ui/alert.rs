@@ -46,7 +46,7 @@ pub fn AlertComponent(
                 a { href: alert.link, target: "_blank", "🔍" }
             }
             div {
-                class: "p-1 flex-none text-gray-500 text-sm tabular-nums w-16 text-right",
+                class: "p-1 flex-none text-gray-300 text-sm tabular-nums w-16 text-right",
                 title: "{starts_at_title}",
                 "{age}"
             }

@@ -9,6 +9,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Keep in sync with the `dioxus` dependency in Cargo.toml.
+  DIOXUS_CLI_VERSION: "0.7.7"
 
 jobs:
   build:
@@ -60,8 +62,12 @@ jobs:
         run: pkg-config --modversion glib-2.0 gtk+-3.0 javascriptcoregtk-4.1 libsoup-3.0
 
       # ── Dioxus CLI ──────────────────────────────────────────────────
+      # Downloads the prebuilt `dx` binary published with each Dioxus release
+      # instead of building it from source (which took 9-19 min per job).
       - name: Install Dioxus CLI
-        run: cargo install dioxus-cli --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: dioxus-cli@${{ env.DIOXUS_CLI_VERSION }}
 
       # ── Node + Tailwind CSS ─────────────────────────────────────────
       - name: Setup Node.js
