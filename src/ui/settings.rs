@@ -1,4 +1,6 @@
-use crate::entities::settings::{ProviderGrafanaSetting, Settings};
+use crate::entities::settings::{
+    ProviderGitlabSetting, ProviderGrafanaSetting, Settings, default_gitlab_url,
+};
 use crate::poller::Poller;
 use crate::settings::settings_path;
 use dioxus::prelude::*;
@@ -68,6 +70,57 @@ pub fn SettingsView() -> Element {
                         });
                     },
                     "+ Add Grafana"
+                }
+            }
+
+            // GitLab providers
+            div { class: "mb-6",
+                h3 { class: "font-bold mb-2", "GitLab providers" }
+                for (i , provider) in draft.read().providers.gitlab.clone().into_iter().enumerate() {
+                    div { key: "{i}", class: "flex gap-2 mb-2",
+                        input {
+                            class: "border px-2 py-1 flex-1",
+                            placeholder: "URL",
+                            value: "{provider.url}",
+                            oninput: move |e| {
+                                draft.write().providers.gitlab[i].url = e.value();
+                            },
+                        }
+                        input {
+                            class: "border px-2 py-1 flex-1",
+                            placeholder: "Token",
+                            value: "{provider.token}",
+                            oninput: move |e| {
+                                draft.write().providers.gitlab[i].token = e.value();
+                            },
+                        }
+                        input {
+                            class: "border px-2 py-1 w-28",
+                            placeholder: "Project ID",
+                            value: "{provider.project_id}",
+                            oninput: move |e| {
+                                draft.write().providers.gitlab[i].project_id = e.value();
+                            },
+                        }
+                        button {
+                            class: "px-2 py-1 text-red-600",
+                            onclick: move |_| {
+                                draft.write().providers.gitlab.remove(i);
+                            },
+                            "✕"
+                        }
+                    }
+                }
+                button {
+                    class: "text-sm mt-1",
+                    onclick: move |_| {
+                        draft.write().providers.gitlab.push(ProviderGitlabSetting {
+                            url: default_gitlab_url(),
+                            token: String::new(),
+                            project_id: String::new(),
+                        });
+                    },
+                    "+ Add GitLab"
                 }
             }
 

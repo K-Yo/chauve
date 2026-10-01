@@ -1,4 +1,4 @@
-use crate::entities::alert::{Alert, Severity};
+use crate::entities::alert::{Alert, AlertVariant, Severity};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
@@ -11,9 +11,6 @@ pub trait ProviderAlert {
         None
     }
     fn severity(&self) -> Option<Severity> {
-        None
-    }
-    fn link(&self) -> Option<String> {
         None
     }
     fn description(&self) -> Option<String> {
@@ -29,6 +26,8 @@ pub trait ProviderAlert {
     fn starts_at(&self) -> Option<DateTime<Utc>> {
         None
     }
+    /// The provider-specific view of this alert.
+    fn variant(&self) -> AlertVariant;
 }
 
 pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
@@ -37,11 +36,11 @@ pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
 
         title: provider_alert.title().unwrap_or_default(),
         severity: provider_alert.severity().unwrap_or_default(),
-        link: provider_alert.link().unwrap_or_default(),
         description: provider_alert.description().unwrap_or_default(),
         summary: provider_alert.summary().unwrap_or_default(),
         instance: provider_alert.instance().unwrap_or_default(),
         starts_at: provider_alert.starts_at(),
+        variants: vec![provider_alert.variant()],
     }
 }
 

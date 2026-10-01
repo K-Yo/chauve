@@ -28,6 +28,15 @@ pub fn AlertComponent(
         ""
     };
     let severity_class = format!("severity-{}", alert.severity.machinename);
+    // (href, tooltip, icon) for each provider variant that has a link.
+    let links: Vec<(String, String, &str)> = alert
+        .variants
+        .iter()
+        .filter_map(|v| {
+            v.link()
+                .map(|href| (href.to_string(), format!("Open in {}", v.label()), v.icon()))
+        })
+        .collect();
     rsx! {
         div {
             class: "alert flex whitespace-nowrap {severity_class} {pinned_class}",
@@ -43,8 +52,11 @@ pub fn AlertComponent(
                 let id = id.clone();
                 move |_| on_mouse_leave.call(id.clone())
             },
-            div { class: "p-1 flex-none",
-                a { href: alert.link, target: "_blank", "🔍" }
+            // One link per provider reporting this alert.
+            div { class: "p-1 flex-none flex gap-1 w-14",
+                for (href , title , icon) in links {
+                    a { href, target: "_blank", title, "{icon}" }
+                }
             }
             div {
                 class: "p-1 flex-none text-gray-300 text-sm tabular-nums w-16 text-right",

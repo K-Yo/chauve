@@ -22,12 +22,13 @@
 
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
+use std::collections::HashMap;
 use std::fmt;
 use tracing::{debug, warn};
 
 use crate::{
     entities::{alert::Alert, provider::Provider, settings::Settings},
-    providers::grafana::provider::GrafanaProvider,
+    providers::{gitlab::provider::GitlabProvider, grafana::provider::GrafanaProvider},
 };
 
 #[derive(Debug, Clone)]
@@ -99,7 +100,7 @@ impl Poller {
         }
 
         let data = PollerData {
-            alerts: all_alerts,
+            alerts: merge_alerts(all_alerts),
             last_poll_time: now,
             stats: PollStats {
                 success_count,
@@ -147,6 +148,14 @@ impl Poller {
             let provider = GrafanaProvider::new(grafana_settings.url, grafana_settings.token);
             all_providers.push(Box::new(provider));
         }
+        for gitlab_settings in settings.providers.gitlab {
+            let provider = GitlabProvider::new(
+                gitlab_settings.url,
+                gitlab_settings.token,
+                gitlab_settings.project_id,
+            );
+            all_providers.push(Box::new(provider));
+        }
         all_providers
     }
 
@@ -159,6 +168,44 @@ impl Poller {
     }
 }
 
+/// Merge alerts reported by several providers into one alert each.
+///
+/// Alerts whose variants share a match key are the same alert. The most
+/// authoritative one (lowest rank) keeps its id and base fields; the others
+/// only contribute their variants. An alert matching several existing alerts
+/// (e.g. one GitLab alert for a group of Grafana alerts) is merged into each.
+fn merge_alerts(mut alerts: Vec<Alert>) -> Vec<Alert> {
+    alerts.sort_by_key(Alert::rank);
+
+    let mut merged: Vec<Alert> = Vec::with_capacity(alerts.len());
+    let mut index_by_key: HashMap<String, usize> = HashMap::new();
+
+    for alert in alerts {
+        let keys: Vec<String> = alert.variants.iter().flat_map(|v| v.match_keys()).collect();
+        let mut targets: Vec<usize> = keys
+            .iter()
+            .filter_map(|k| index_by_key.get(k).copied())
+            .collect();
+        targets.sort_unstable();
+        targets.dedup();
+
+        if targets.is_empty() {
+            for key in keys {
+                index_by_key.entry(key).or_insert(merged.len());
+            }
+            merged.push(alert);
+        } else {
+            for &i in &targets {
+                merged[i].merge(alert.clone());
+            }
+            for key in keys {
+                index_by_key.entry(key).or_insert(targets[0]);
+            }
+        }
+    }
+    merged
+}
+
 #[cfg(test)]
 mod tests {
     // Add required test dependencies
@@ -166,7 +213,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use crate::entities::{
-        alert::{Alert, Severity},
+        alert::{Alert, AlertVariant, GitlabVariant, GrafanaVariant, Severity},
         provider::{Provider, ProviderError},
     };
     use tokio;
@@ -216,21 +263,27 @@ mod tests {
                         id: format!("1"),
                         title: format!("Alert from provider {} - 1", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
-                        link: format!("http://provider{}/alert1", self.id),
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
                         starts_at: None,
+                        variants: vec![AlertVariant::Grafana(GrafanaVariant {
+                            fingerprint: format!("provider{}-alert1", self.id),
+                            generator_url: Some(format!("http://provider{}/alert1", self.id)),
+                        })],
                     },
                     Alert {
                         id: format!("2"),
                         title: format!("Alert from provider {} - 2", self.id),
                         severity: Severity::new(format!("severity-{}", self.id)),
-                        link: format!("http://provider{}/alert2", self.id),
                         description: "".to_string(),
                         summary: "".to_string(),
                         instance: "".to_string(),
                         starts_at: Some(Utc::now() - chrono::Duration::hours(2)),
+                        variants: vec![AlertVariant::Grafana(GrafanaVariant {
+                            fingerprint: format!("provider{}-alert2", self.id),
+                            generator_url: Some(format!("http://provider{}/alert2", self.id)),
+                        })],
                     },
                 ])
             }
@@ -379,5 +432,86 @@ mod tests {
             let more_alerts = result.expect("Subsequent polls should succeed");
             assert_eq!(more_alerts.len(), 0);
         }
+    }
+
+    fn grafana_alert(fingerprint: &str) -> Alert {
+        Alert {
+            id: fingerprint.to_string(),
+            title: format!("Grafana {}", fingerprint),
+            severity: Severity::new("critical".to_string()),
+            description: String::new(),
+            summary: String::new(),
+            instance: String::new(),
+            starts_at: None,
+            variants: vec![AlertVariant::Grafana(GrafanaVariant {
+                fingerprint: fingerprint.to_string(),
+                generator_url: Some(format!("http://grafana/{}", fingerprint)),
+            })],
+        }
+    }
+
+    fn gitlab_alert(iid: &str, fingerprints: &[&str]) -> Alert {
+        Alert {
+            id: format!("gitlab-1-{}", iid),
+            title: format!("GitLab {}", iid),
+            severity: Severity::new("high".to_string()),
+            description: String::new(),
+            summary: "from gitlab".to_string(),
+            instance: String::new(),
+            starts_at: None,
+            variants: vec![AlertVariant::Gitlab(GitlabVariant {
+                iid: iid.to_string(),
+                web_url: format!("http://gitlab/alerts/{}", iid),
+                fingerprints: fingerprints.iter().map(|f| f.to_string()).collect(),
+            })],
+        }
+    }
+
+    #[test]
+    fn test_merge_matching_alerts() {
+        let merged = merge_alerts(vec![grafana_alert("aaa"), gitlab_alert("1", &["aaa"])]);
+
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].id, "aaa");
+        assert_eq!(merged[0].title, "Grafana aaa");
+        assert_eq!(merged[0].severity.machinename, "critical");
+        // Empty base fields are filled from the duplicate.
+        assert_eq!(merged[0].summary, "from gitlab");
+        assert_eq!(merged[0].variants.len(), 2);
+        assert_eq!(merged[0].variants[1].link(), Some("http://gitlab/alerts/1"));
+    }
+
+    #[test]
+    fn test_merge_keeps_unmatched_alerts() {
+        let merged = merge_alerts(vec![grafana_alert("aaa"), gitlab_alert("1", &["zzz"])]);
+
+        assert_eq!(merged.len(), 2);
+        assert!(merged.iter().all(|a| a.variants.len() == 1));
+        assert!(merged.iter().any(|a| a.id == "gitlab-1-1"));
+    }
+
+    #[test]
+    fn test_merge_grouped_alert_into_each_match() {
+        let merged = merge_alerts(vec![
+            grafana_alert("aaa"),
+            grafana_alert("bbb"),
+            grafana_alert("ccc"),
+            gitlab_alert("1", &["aaa", "bbb"]),
+        ]);
+
+        assert_eq!(merged.len(), 3);
+        for alert in &merged {
+            let expected = if alert.id == "ccc" { 1 } else { 2 };
+            assert_eq!(alert.variants.len(), expected, "alert {}", alert.id);
+        }
+    }
+
+    #[test]
+    fn test_merge_prefers_authoritative_alert_regardless_of_order() {
+        let merged = merge_alerts(vec![gitlab_alert("1", &["aaa"]), grafana_alert("aaa")]);
+
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].id, "aaa");
+        assert_eq!(merged[0].title, "Grafana aaa");
     }
 }

@@ -9,10 +9,108 @@ pub struct Alert {
     pub severity: Severity,
     pub description: String,
     pub summary: String,
-    pub link: String,
     pub instance: String,
     /// When the alert started firing, if the provider reports it.
     pub starts_at: Option<DateTime<Utc>>,
+    /// Provider-specific views of this alert, one per provider reporting it.
+    pub variants: Vec<AlertVariant>,
+}
+
+impl Alert {
+    /// Absorb a duplicate of this alert: keep our base fields, only filling
+    /// the empty ones, and take over its variants.
+    pub fn merge(&mut self, other: Alert) {
+        if self.title.is_empty() {
+            self.title = other.title;
+        }
+        if self.severity.machinename == Severity::default().machinename {
+            self.severity = other.severity;
+        }
+        if self.description.is_empty() {
+            self.description = other.description;
+        }
+        if self.summary.is_empty() {
+            self.summary = other.summary;
+        }
+        if self.instance.is_empty() {
+            self.instance = other.instance;
+        }
+        if self.starts_at.is_none() {
+            self.starts_at = other.starts_at;
+        }
+        self.variants.extend(other.variants);
+    }
+
+    /// Rank of the most authoritative variant (lower = more authoritative).
+    pub fn rank(&self) -> u8 {
+        self.variants
+            .iter()
+            .map(AlertVariant::rank)
+            .min()
+            .unwrap_or(u8::MAX)
+    }
+}
+
+/// What a single provider knows about an alert.
+#[derive(Debug, Clone, PartialEq)]
+pub enum AlertVariant {
+    Grafana(GrafanaVariant),
+    Gitlab(GitlabVariant),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GrafanaVariant {
+    pub fingerprint: String,
+    pub generator_url: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GitlabVariant {
+    pub iid: String,
+    pub web_url: String,
+    /// Grafana fingerprints found in the GitLab alert details.
+    pub fingerprints: Vec<String>,
+}
+
+impl AlertVariant {
+    pub fn link(&self) -> Option<&str> {
+        match self {
+            AlertVariant::Grafana(v) => v.generator_url.as_deref(),
+            AlertVariant::Gitlab(v) => Some(v.web_url.as_str()),
+        }
+    }
+
+    pub fn icon(&self) -> &'static str {
+        match self {
+            AlertVariant::Grafana(_) => "🔍",
+            AlertVariant::Gitlab(_) => "🦊",
+        }
+    }
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            AlertVariant::Grafana(_) => "Grafana",
+            AlertVariant::Gitlab(_) => "GitLab",
+        }
+    }
+
+    /// Keys identifying the underlying alert: variants sharing a key describe
+    /// the same alert and get merged.
+    pub fn match_keys(&self) -> Vec<String> {
+        match self {
+            AlertVariant::Grafana(v) => vec![v.fingerprint.clone()],
+            AlertVariant::Gitlab(v) => v.fingerprints.clone(),
+        }
+    }
+
+    /// Lower = more authoritative. When alerts merge, the most authoritative
+    /// one keeps its id and base fields.
+    pub fn rank(&self) -> u8 {
+        match self {
+            AlertVariant::Grafana(_) => 0,
+            AlertVariant::Gitlab(_) => 1,
+        }
+    }
 }
 
 /// Compact two-unit relative duration: "45s", "12m", "2h 13m", "3d 4h".
