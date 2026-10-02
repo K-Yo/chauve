@@ -43,12 +43,26 @@ impl Default for NotificationSettings {
 pub struct ProvidersSettings {
     #[serde(default)]
     pub grafana: Vec<ProviderGrafanaSetting>,
+    #[serde(default)]
+    pub gitlab: Vec<ProviderGitlabSetting>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProviderGrafanaSetting {
     pub url: String,
     pub token: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ProviderGitlabSetting {
+    #[serde(default = "default_gitlab_url")]
+    pub url: String,
+    pub token: String,
+    pub project_id: String,
+}
+
+pub fn default_gitlab_url() -> String {
+    "https://gitlab.com".to_string()
 }
 
 // Default poll frequency in seconds (5 seconds)
@@ -79,7 +93,10 @@ mod tests {
                 "poll_frequency=10\n\
                      [[providers.grafana]]\n\
                         url=\"http://localhost:3000\"\n\
-                        token=\"glsa_Som3t0k3n\"\n",
+                        token=\"glsa_Som3t0k3n\"\n\
+                     [[providers.gitlab]]\n\
+                        token=\"glpat-Som3t0k3n\"\n\
+                        project_id=\"42\"\n",
                 FileFormat::Toml,
             ))
             .build()
@@ -95,6 +112,9 @@ mod tests {
             settings.providers.grafana[0].token.as_str(),
             "glsa_Som3t0k3n"
         );
+        assert_eq!(settings.providers.gitlab[0].url, "https://gitlab.com");
+        assert_eq!(settings.providers.gitlab[0].token, "glpat-Som3t0k3n");
+        assert_eq!(settings.providers.gitlab[0].project_id, "42");
         assert_eq!(settings.poll_frequency, 10);
     }
 

@@ -9,9 +9,17 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      cargo:
+        patterns: ["*"]
+        # dioxus is pinned exactly and dx must match it, so it gets its own PR.
+        exclude-patterns: ["dioxus*"]
 
   # Keeps the pinned action versions in the workflows current.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]

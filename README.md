@@ -71,7 +71,7 @@ first launch:
 | Linux   | `~/.config/chauve/Settings.toml`                   |
 | Windows | `%APPDATA%\chauve\Settings.toml`                   |
 
-Currently, Grafana is supported as a provider:
+Grafana and GitLab are supported as providers:
 
 ```toml
 poll_frequency = 5 # seconds
@@ -83,10 +83,19 @@ min_severity = "high" # critical, high, medium or low
 [[providers.grafana]]
 url = "https://your-grafana-instance.com"
 token = "your-api-token"
+
+[[providers.gitlab]]
+url = "https://gitlab.com" # optional, defaults to https://gitlab.com
+token = "glpat-..."        # needs the read_api scope
+project_id = "12345"
 ```
 
-You can configure multiple Grafana instances by adding multiple
-`[[providers.grafana]]` entries. Every key can also be set through `APP_`-prefixed
+You can configure multiple instances by adding multiple `[[providers.grafana]]`
+or `[[providers.gitlab]]` entries. GitLab provides the open (triggered or
+acknowledged) alerts of a project's Alert Management. When a GitLab alert's
+details contain a Grafana alert fingerprint, it is merged into that Grafana
+alert: the row shows one link per provider (🔍 Grafana, 🦊 GitLab). GitLab alerts
+without a matching Grafana alert get their own row. Every key can also be set through `APP_`-prefixed
 environment variables.
 
 ## Code Organization
@@ -102,14 +111,14 @@ src/
 └── settings.rs   # Configuration management
 ```
 
-The architecture is extensible to support multiple alert providers through a plugin system. Currently, Grafana integration is implemented, but the design allows for easy addition of other providers like Prometheus, Datadog, etc.
+The architecture is extensible to support multiple alert providers through a plugin system. Currently, Grafana and GitLab integrations are implemented, but the design allows for easy addition of other providers like Prometheus, Datadog, etc.
 
 ## Features
 
 - Real-time alert monitoring with 5-second auto-refresh
 - Manual refresh capability via "Update!" button
 - Clean, responsive UI built with Dioxus and Tailwind CSS
-- Support for multiple Grafana instances
+- Support for multiple Grafana and GitLab instances, with deduplication of alerts reported by both
 - Extensible provider architecture
 
 ## Future Roadmap

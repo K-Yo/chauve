@@ -47,11 +47,11 @@ Dioxus version: **0.7.10**, pinned exactly (`=0.7.10`) in `Cargo.toml`. Check `C
 
 The codebase is layered with strict separation of concerns:
 
-**`src/entities/`** — Core domain types. `Alert` is the normalized alert structure used throughout the app. `Provider` and `ProviderAlert` are traits that define the extension points for adding new alert sources. New providers must implement these.
+**`src/entities/`** — Core domain types. `Alert` is the normalized, provider-agnostic alert structure used throughout the app; it holds one `AlertVariant` per provider reporting it (provider-specific data: link, match keys, rank). `Provider` and `ProviderAlert` are traits that define the extension points for adding new alert sources. New providers must implement these.
 
-**`src/providers/`** — External service integrations. Each provider lives in its own subdirectory (e.g., `providers/grafana/`). The provider fetches raw data from the API and converts it to `Alert` via `ProviderAlert`. Currently only Grafana is implemented, connecting to Grafana's Alertmanager API with bearer token auth.
+**`src/providers/`** — External service integrations. Each provider lives in its own subdirectory (e.g., `providers/grafana/`). The provider fetches raw data from the API and converts it to `Alert` via `ProviderAlert`. Grafana connects to Grafana's Alertmanager API with bearer token auth; GitLab queries a project's Alert Management via GraphQL (`/api/graphql`) and extracts Grafana fingerprints from the alert `details`.
 
-**`src/poller.rs`** — Orchestration layer. `Poller` holds a list of `Provider` instances and calls them all in parallel via `join_all`. Returns `PollerData` with aggregated alerts, poll time, and per-provider stats. This is the main unit-tested file (mock providers are defined in its test module).
+**`src/poller.rs`** — Orchestration layer. `Poller` holds a list of `Provider` instances and calls them all in parallel via `join_all`. `merge_alerts` then merges alerts whose variants share a match key (Grafana fingerprint): the lowest-rank alert keeps its id and base fields, the others contribute their variants. Returns `PollerData` with aggregated alerts, poll time, and per-provider stats. This is the main unit-tested file (mock providers are defined in its test module).
 
 **`src/settings.rs`** — Loads `Settings.toml` (or `APP_` prefixed env vars as fallback) into strongly-typed structs via `config` + `serde`. Settings are passed to the `Poller` at startup. Poll frequency is configurable via `poll_frequency` (default: 5s); see `src/entities/settings.rs`.
 
@@ -59,14 +59,14 @@ The codebase is layered with strict separation of concerns:
 
 ## Key Patterns
 
-- **Adding a provider**: Implement `Provider` (async `alerts()` returning `Vec<Alert>`) and `ProviderAlert` (convert raw type → `Alert`). Register in the provider list built from `Settings` in `ui/app.rs`.
+- **Adding a provider**: Add an `AlertVariant` variant (link, icon, label, match keys, rank) in `entities/alert.rs`, implement `Provider` (async `alerts()` returning `Vec<Alert>`) and `ProviderAlert` (convert raw type → `Alert`, including `variant()`). Register in `Poller::build_providers` (`poller.rs`) and add a section to `ui/settings.rs`.
 - **State management**: Dioxus signals. Avoid shared mutable state outside of signals.
 - **Error handling**: `anyhow::Result` in providers; `thiserror`-derived enums for `ProviderError`. Fail with context rather than silently returning empty results.
 - **Testing**: Tests live in `poller.rs` using in-module mock providers. No external services needed.
 
 ## Configuration
 
-`Settings.toml` lives in the OS config dir (`~/Library/Application Support/chauve/` on macOS, `~/.config/chauve/` on Linux, `%APPDATA%\chauve\` on Windows) and is created with defaults on first launch — see `config_dir()` in `src/settings.rs`. Multiple Grafana instances are supported:
+`Settings.toml` lives in the OS config dir (`~/Library/Application Support/chauve/` on macOS, `~/.config/chauve/` on Linux, `%APPDATA%\chauve\` on Windows) and is created with defaults on first launch — see `config_dir()` in `src/settings.rs`. Multiple Grafana and GitLab instances are supported:
 
 ```toml
 poll_frequency = 5  # seconds
@@ -74,4 +74,9 @@ poll_frequency = 5  # seconds
 [[providers.grafana]]
 url = "https://grafana.example.com"
 token = "glsa_..."
+
+[[providers.gitlab]]
+url = "https://gitlab.com"  # optional, this is the default
+token = "glpat-..."         # read_api scope
+project_id = "12345"
 ```

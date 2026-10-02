@@ -4,7 +4,10 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::entities::{alert::Severity, provider::ProviderAlert};
+use crate::entities::{
+    alert::{AlertVariant, GrafanaVariant, Severity},
+    provider::ProviderAlert,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct GrafanaAlert {
@@ -36,8 +39,11 @@ impl ProviderAlert for GrafanaAlert {
         self.labels.get("alertname").cloned()
     }
 
-    fn link(&self) -> Option<String> {
-        self.generator_url.clone()
+    fn variant(&self) -> AlertVariant {
+        AlertVariant::Grafana(GrafanaVariant {
+            fingerprint: self.fingerprint.clone(),
+            generator_url: self.generator_url.clone(),
+        })
     }
 
     fn description(&self) -> Option<String> {
