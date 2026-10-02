@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # The footer displays CARGO_PKG_VERSION, so a tag that disagrees with
       # Cargo.toml would ship a binary labelled with the wrong version.
@@ -89,7 +89,7 @@ jobs:
 
       # ── Node + Tailwind CSS ─────────────────────────────────────────
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "latest"
 
@@ -141,7 +141,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
 
@@ -161,7 +161,7 @@ jobs:
           cp artifacts/chauve-macos-arm64/chauve-macos-arm64.dmg release-assets/chauve-macos-arm64-${TAG}.dmg
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: release-assets/*
           generate_release_notes: true

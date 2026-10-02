@@ -48,6 +48,17 @@ The release assets are plain executables (`chauve-linux-amd64-vX.Y.Z` and
    npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --watch
    ```
 
+## Release
+
+The release workflow rejects any tag whose name disagrees with the `Cargo.toml` version, so bump
+with the script rather than by hand:
+
+```bash
+./scripts/release.sh 0.1.2      # rewrites Cargo.toml + Cargo.lock, no git writes
+git commit -am 'release v0.1.2'
+git tag v0.1.2
+git push origin HEAD v0.1.2     # pushing the tag is what triggers the build
+```
 
 ## Configuration
 

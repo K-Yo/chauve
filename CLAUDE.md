@@ -32,7 +32,12 @@ npx @tailwindcss/cli -i ./assets/source.css -o ./assets/main.css --minify
 # Needed instead of `dx build` because only `dx bundle` fills in Contents/Resources
 # (the app icon) and ad-hoc signs the bundle.
 dx bundle --release --platform desktop --package-types dmg --out-dir dist
+
+# Bump the version for a release (edits Cargo.toml + Cargo.lock only, no git writes)
+./scripts/release.sh X.Y.Z
 ```
+
+Releases are triggered by pushing a `vX.Y.Z` tag, and `.github/workflows/release.yml` refuses to build a tag whose name disagrees with the `Cargo.toml` version — the footer renders `CARGO_PKG_VERSION`, so a mismatch would ship a binary labelled with the wrong version. Always bump via `./scripts/release.sh`, then commit and tag with the same version.
 
 Dioxus CLI must be installed: run `./scripts/install-dx.sh`. It installs `dx` at exactly the resolved `dioxus` version — `dx` refuses to build against any other version.
 
