@@ -3,6 +3,9 @@ use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 use std::cmp::Reverse;
 
+/// Provider link columns, in display order (matched against `AlertVariant::label`).
+const LINK_COLUMNS: [&str; 2] = ["Grafana", "GitLab"];
+
 #[component]
 pub fn AlertComponent(
     alert: Alert,
@@ -28,13 +31,18 @@ pub fn AlertComponent(
         ""
     };
     let severity_class = format!("severity-{}", alert.severity.machinename);
-    // (href, tooltip, icon) for each provider variant that has a link.
-    let links: Vec<(String, String, &str)> = alert
-        .variants
+    // One slot per provider column, (href, tooltip, icon) when that provider links this alert.
+    let links: Vec<Option<(String, String, &str)>> = LINK_COLUMNS
         .iter()
-        .filter_map(|v| {
-            v.link()
-                .map(|href| (href.to_string(), format!("Open in {}", v.label()), v.icon()))
+        .map(|label| {
+            alert
+                .variants
+                .iter()
+                .find(|v| v.label() == *label)
+                .and_then(|v| {
+                    v.link()
+                        .map(|href| (href.to_string(), format!("Open in {}", v.label()), v.icon()))
+                })
         })
         .collect();
     rsx! {
@@ -52,10 +60,14 @@ pub fn AlertComponent(
                 let id = id.clone();
                 move |_| on_mouse_leave.call(id.clone())
             },
-            // One link per provider reporting this alert.
-            div { class: "p-1 flex-none flex gap-1 w-14",
-                for (href , title , icon) in links {
-                    a { href, target: "_blank", title, "{icon}" }
+            // One fixed-width column per provider, so icons stay aligned across rows.
+            div { class: "p-1 flex-none flex gap-1",
+                for link in links {
+                    div { class: "w-6 flex-none text-center",
+                        if let Some((href, title, icon)) = link {
+                            a { href, target: "_blank", title, "{icon}" }
+                        }
+                    }
                 }
             }
             div {
