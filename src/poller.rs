@@ -463,6 +463,7 @@ mod tests {
                 iid: iid.to_string(),
                 web_url: format!("http://gitlab/alerts/{}", iid),
                 fingerprints: fingerprints.iter().map(|f| f.to_string()).collect(),
+                assignee: None,
             })],
         }
     }

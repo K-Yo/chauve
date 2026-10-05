@@ -1,4 +1,4 @@
-use crate::entities::alert::{Alert, format_age};
+use crate::entities::alert::{Alert, AlertVariant, format_age};
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 use std::cmp::Reverse;
@@ -45,6 +45,10 @@ pub fn AlertComponent(
                 })
         })
         .collect();
+    let assignee = alert.variants.iter().find_map(|v| match v {
+        AlertVariant::Gitlab(v) => v.assignee.clone(),
+        _ => None,
+    });
     rsx! {
         div {
             class: "alert flex whitespace-nowrap {severity_class} {pinned_class}",
@@ -66,6 +70,25 @@ pub fn AlertComponent(
                     div { class: "w-6 flex-none text-center",
                         if let Some((href, title, icon)) = link {
                             a { href, target: "_blank", title, "{icon}" }
+                        }
+                    }
+                }
+            }
+            // GitLab assignee avatar, sized to the text line so the row keeps its height.
+            div { class: "p-1 flex-none w-8",
+                if let Some(user) = assignee {
+                    if let Some(src) = user.avatar_url {
+                        img {
+                            class: "block size-6 rounded-full object-cover",
+                            src,
+                            alt: "{user.name}",
+                            title: "Assigned to {user.name} (@{user.username})",
+                        }
+                    } else {
+                        div {
+                            class: "size-6 text-center",
+                            title: "Assigned to {user.name} (@{user.username})",
+                            "👤"
                         }
                     }
                 }

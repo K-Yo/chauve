@@ -14,7 +14,8 @@ use serde_json::json;
 /// projects with a large history of resolved alerts.
 const ALERTS_QUERY: &str = "query($ids: [ID!]) { projects(ids: $ids) { nodes {
   alertManagementAlerts(statuses: [TRIGGERED, ACKNOWLEDGED], sort: CREATED_DESC, first: 100) {
-    nodes { iid title severity description startedAt webUrl details }
+    nodes { iid title severity description startedAt webUrl details
+      assignees { nodes { name username avatarUrl } } }
   } } } }";
 
 #[derive(Debug, Clone)]
@@ -74,8 +75,14 @@ struct Project {
 }
 
 #[derive(Debug, Deserialize)]
-struct Nodes<T> {
-    nodes: Vec<T>,
+pub struct Nodes<T> {
+    pub nodes: Vec<T>,
+}
+
+impl<T> Default for Nodes<T> {
+    fn default() -> Self {
+        Nodes { nodes: Vec::new() }
+    }
 }
 
 impl GitlabProvider {
@@ -117,6 +124,14 @@ impl GitlabProvider {
             .into_iter()
             .map(|mut alert| {
                 alert.project_id = self.project_id.clone();
+                // Self-hosted instances return avatar paths relative to the instance.
+                for user in &mut alert.assignees.nodes {
+                    if let Some(avatar_url) = &mut user.avatar_url
+                        && avatar_url.starts_with('/')
+                    {
+                        *avatar_url = format!("{}{}", self.url, avatar_url);
+                    }
+                }
                 alert
             })
             .collect();

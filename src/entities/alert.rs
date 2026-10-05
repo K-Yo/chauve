@@ -70,6 +70,16 @@ pub struct GitlabVariant {
     pub web_url: String,
     /// Grafana fingerprints found in the GitLab alert details.
     pub fingerprints: Vec<String>,
+    /// First user assigned to the alert, if any.
+    pub assignee: Option<GitlabUser>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GitlabUser {
+    pub name: String,
+    pub username: String,
+    /// Absolute URL of the profile picture.
+    pub avatar_url: Option<String>,
 }
 
 impl AlertVariant {
