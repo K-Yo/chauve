@@ -4,8 +4,9 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::Value;
 
+use super::provider::Nodes;
 use crate::entities::{
-    alert::{AlertVariant, GitlabVariant, Severity},
+    alert::{AlertVariant, GitlabUser, GitlabVariant, Severity},
     provider::ProviderAlert,
 };
 
@@ -28,6 +29,17 @@ pub struct GitlabAlert {
 
     /// Payload received by GitLab, holding the Grafana alert JSON.
     pub details: Option<Value>,
+
+    #[serde(default)]
+    pub assignees: Nodes<GitlabAssignee>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GitlabAssignee {
+    pub name: String,
+    pub username: String,
+    #[serde(rename = "avatarUrl")]
+    pub avatar_url: Option<String>,
 }
 
 impl ProviderAlert for GitlabAlert {
@@ -74,6 +86,11 @@ impl ProviderAlert for GitlabAlert {
                 .as_ref()
                 .map(extract_fingerprints)
                 .unwrap_or_default(),
+            assignee: self.assignees.nodes.first().map(|user| GitlabUser {
+                name: user.name.clone(),
+                username: user.username.clone(),
+                avatar_url: user.avatar_url.clone(),
+            }),
         })
     }
 }
@@ -136,7 +153,10 @@ fn collect_fingerprints(value: &Value, fingerprints: &mut Vec<String>) {
 #[cfg(test)]
 mod tests {
     use super::{GitlabAlert, extract_fingerprints};
-    use crate::entities::provider::{ProviderAlert, convert_alert};
+    use crate::entities::{
+        alert::AlertVariant,
+        provider::{ProviderAlert, convert_alert},
+    };
     use serde_json::json;
 
     /// Shape of an alert sent by Grafana to a GitLab HTTP integration.
@@ -160,7 +180,12 @@ mod tests {
                 "annotations.summary": "SWAP usage of 81% on host1",
                 "fingerprint": "c9c47fa31dcc3751",
                 "generatorURL": "https://grafana.example.com/alerting/grafana/a6232484/view"
-            }
+            },
+            "assignees": {"nodes": [{
+                "name": "Jane Doe",
+                "username": "jdoe",
+                "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/1/avatar.png"
+            }]}
         }))
         .unwrap()
     }
@@ -186,6 +211,15 @@ mod tests {
             alert.variants[0].link(),
             Some("https://gitlab.com/group/project/-/alert_management/83578/details")
         );
+        let AlertVariant::Gitlab(variant) = &alert.variants[0] else {
+            panic!("expected a GitLab variant");
+        };
+        let assignee = variant.assignee.as_ref().unwrap();
+        assert_eq!(assignee.username, "jdoe");
+        assert_eq!(
+            assignee.avatar_url.as_deref(),
+            Some("https://gitlab.com/uploads/-/system/user/avatar/1/avatar.png")
+        );
     }
 
     #[test]
@@ -205,6 +239,10 @@ mod tests {
         assert_eq!(gitlab_alert.summary().as_deref(), Some("Manual alert"));
         assert!(gitlab_alert.instance().is_none());
         assert!(gitlab_alert.variant().match_keys().is_empty());
+        let AlertVariant::Gitlab(variant) = gitlab_alert.variant() else {
+            panic!("expected a GitLab variant");
+        };
+        assert!(variant.assignee.is_none());
     }
 
     #[test]
