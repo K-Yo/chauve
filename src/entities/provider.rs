@@ -48,9 +48,19 @@ pub fn convert_alert<T: ProviderAlert>(provider_alert: &T) -> Alert {
 ///
 /// Can be grafana, prometheus, or any other system that can provide alerts.
 #[async_trait]
-pub trait Provider {
+pub trait Provider: Send + Sync {
     /// Retrieve normalized alerts from the provider.
     async fn alerts(&self) -> Result<Vec<Alert>, ProviderError>;
+
+    /// Assign the alert behind `variant` to the user owning the provider
+    /// credentials, returning the updated variant. `None` when the variant
+    /// belongs to another provider.
+    async fn assign_to_me(
+        &self,
+        _variant: &AlertVariant,
+    ) -> Result<Option<AlertVariant>, ProviderError> {
+        Ok(None)
+    }
 
     // needed to make it clonable in a box
     fn clone_box(&self) -> Box<dyn Provider>;

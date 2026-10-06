@@ -66,6 +66,10 @@ pub struct GrafanaVariant {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GitlabVariant {
+    /// Project as configured, used to route actions back to its provider.
+    pub project_id: String,
+    /// `group/project`, required by GitLab mutations.
+    pub project_path: String,
     pub iid: String,
     pub web_url: String,
     /// Grafana fingerprints found in the GitLab alert details.
