@@ -1,4 +1,5 @@
 use crate::entities::alert::{Alert, AlertVariant, format_age};
+use crate::poller::Poller;
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 use std::cmp::Reverse;
@@ -49,6 +50,19 @@ pub fn AlertComponent(
         AlertVariant::Gitlab(v) => v.assignee.clone(),
         _ => None,
     });
+    // GitLab alert offered for self-assignment when nobody holds it.
+    let unassigned = alert
+        .variants
+        .iter()
+        .find(|v| matches!(v, AlertVariant::Gitlab(_)))
+        .cloned();
+    let mut poller_signal: Signal<Poller> = use_context();
+    let mut assigning = use_signal(|| false);
+    let mut assign_error: Signal<Option<String>> = use_signal(|| None);
+    let assign_title = match assign_error() {
+        Some(error) => format!("Assignment failed: {error}"),
+        None => "Assign to me".to_string(),
+    };
     rsx! {
         div {
             class: "alert flex whitespace-nowrap {severity_class} {pinned_class}",
@@ -91,6 +105,39 @@ pub fn AlertComponent(
                             "👤"
                         }
                     }
+                } else if let Some(variant) = unassigned {
+                    button {
+                        class: "block size-6 text-center cursor-pointer disabled:cursor-wait",
+                        disabled: assigning(),
+                        title: "{assign_title}",
+                        onclick: move |event| {
+                            // The row pins on click: assigning must not toggle it.
+                            event.stop_propagation();
+                            let variant = variant.clone();
+                            spawn(async move {
+                                assigning.set(true);
+                                let poller = poller_signal.read().clone();
+                                match poller.assign_to_me(&variant).await {
+                                    Ok(updated) => {
+                                        assign_error.set(None);
+                                        poller_signal.write().update_variant(&variant, updated);
+                                    }
+                                    Err(error) => {
+                                        tracing::warn!("Assignment failed: {}", error);
+                                        assign_error.set(Some(error.to_string()));
+                                    }
+                                }
+                                assigning.set(false);
+                            });
+                        },
+                        if assigning() {
+                            "⏳"
+                        } else if assign_error().is_some() {
+                            "⚠️"
+                        } else {
+                            "🙋"
+                        }
+                    }
                 }
             }
             div {
@@ -127,6 +174,8 @@ pub fn AlertList(
             div { class: "min-w-full",
                 for alert in sorted_alerts {
                     AlertComponent {
+                        // Rows reorder between polls: keep per-row state with its alert.
+                        key: "{alert.id}",
                         alert: alert.clone(),
                         is_pinned: pinned_id == Some(alert.id),
                         now,

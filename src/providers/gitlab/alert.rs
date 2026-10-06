@@ -16,6 +16,10 @@ pub struct GitlabAlert {
     #[serde(skip)]
     pub project_id: String,
 
+    /// Not part of the alert node: set by the provider from the project.
+    #[serde(skip)]
+    pub project_path: String,
+
     pub iid: String,
     pub title: Option<String>,
     pub severity: Option<String>,
@@ -40,6 +44,16 @@ pub struct GitlabAssignee {
     pub username: String,
     #[serde(rename = "avatarUrl")]
     pub avatar_url: Option<String>,
+}
+
+impl From<&GitlabAssignee> for GitlabUser {
+    fn from(user: &GitlabAssignee) -> GitlabUser {
+        GitlabUser {
+            name: user.name.clone(),
+            username: user.username.clone(),
+            avatar_url: user.avatar_url.clone(),
+        }
+    }
 }
 
 impl ProviderAlert for GitlabAlert {
@@ -79,6 +93,8 @@ impl ProviderAlert for GitlabAlert {
 
     fn variant(&self) -> AlertVariant {
         AlertVariant::Gitlab(GitlabVariant {
+            project_id: self.project_id.clone(),
+            project_path: self.project_path.clone(),
             iid: self.iid.clone(),
             web_url: self.web_url.clone(),
             fingerprints: self
@@ -86,11 +102,7 @@ impl ProviderAlert for GitlabAlert {
                 .as_ref()
                 .map(extract_fingerprints)
                 .unwrap_or_default(),
-            assignee: self.assignees.nodes.first().map(|user| GitlabUser {
-                name: user.name.clone(),
-                username: user.username.clone(),
-                avatar_url: user.avatar_url.clone(),
-            }),
+            assignee: self.assignees.nodes.first().map(GitlabUser::from),
         })
     }
 }

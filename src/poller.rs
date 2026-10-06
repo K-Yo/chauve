@@ -27,7 +27,11 @@ use std::fmt;
 use tracing::{debug, warn};
 
 use crate::{
-    entities::{alert::Alert, provider::Provider, settings::Settings},
+    entities::{
+        alert::{Alert, AlertVariant},
+        provider::{Provider, ProviderError},
+        settings::Settings,
+    },
     providers::{gitlab::provider::GitlabProvider, grafana::provider::GrafanaProvider},
 };
 
@@ -134,6 +138,32 @@ impl Poller {
         self.cached_alerts.clone()
     }
 
+    /// Assign the alert behind `variant` to the user owning the credentials
+    /// of the provider that reported it, returning the updated variant.
+    pub async fn assign_to_me(
+        &self,
+        variant: &AlertVariant,
+    ) -> Result<AlertVariant, ProviderError> {
+        for provider in &self.providers {
+            if let Some(updated) = provider.assign_to_me(variant).await? {
+                return Ok(updated);
+            }
+        }
+        Err(ProviderError::Config(
+            "no configured provider reported this alert".to_string(),
+        ))
+    }
+
+    /// Swap every cached copy of `old` for `new`, so a change made from the UI
+    /// shows before the next poll.
+    pub fn update_variant(&mut self, old: &AlertVariant, new: AlertVariant) {
+        self.cached_alerts
+            .iter_mut()
+            .flat_map(|alert| alert.variants.iter_mut())
+            .filter(|variant| *variant == old)
+            .for_each(|variant| *variant = new.clone());
+    }
+
     /// Swap the provider list for one built from new settings, keeping cached
     /// alerts and the last poll time so the UI keeps showing data until the
     /// next poll lands.
@@ -213,7 +243,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use crate::entities::{
-        alert::{Alert, AlertVariant, GitlabVariant, GrafanaVariant, Severity},
+        alert::{Alert, AlertVariant, GitlabUser, GitlabVariant, GrafanaVariant, Severity},
         provider::{Provider, ProviderError},
     };
     use tokio;
@@ -460,6 +490,8 @@ mod tests {
             instance: String::new(),
             starts_at: None,
             variants: vec![AlertVariant::Gitlab(GitlabVariant {
+                project_id: "1".to_string(),
+                project_path: "group/project".to_string(),
                 iid: iid.to_string(),
                 web_url: format!("http://gitlab/alerts/{}", iid),
                 fingerprints: fingerprints.iter().map(|f| f.to_string()).collect(),
@@ -514,5 +546,116 @@ mod tests {
         assert_eq!(merged.len(), 1);
         assert_eq!(merged[0].id, "aaa");
         assert_eq!(merged[0].title, "Grafana aaa");
+    }
+
+    /// Provider owning the GitLab alerts of one iid, assigning them to "me".
+    #[derive(Clone)]
+    struct AssigningProvider {
+        iid: String,
+    }
+
+    #[async_trait::async_trait]
+    impl Provider for AssigningProvider {
+        async fn alerts(&self) -> Result<Vec<Alert>, ProviderError> {
+            Ok(vec![])
+        }
+
+        async fn assign_to_me(
+            &self,
+            variant: &AlertVariant,
+        ) -> Result<Option<AlertVariant>, ProviderError> {
+            match variant {
+                AlertVariant::Gitlab(v) if v.iid == self.iid => {
+                    let mut updated = v.clone();
+                    updated.assignee = Some(GitlabUser {
+                        name: "Me".to_string(),
+                        username: "me".to_string(),
+                        avatar_url: None,
+                    });
+                    Ok(Some(AlertVariant::Gitlab(updated)))
+                }
+                _ => Ok(None),
+            }
+        }
+
+        fn clone_box(&self) -> Box<dyn Provider> {
+            Box::new(self.clone())
+        }
+    }
+
+    fn assignee_username(variant: &AlertVariant) -> Option<String> {
+        match variant {
+            AlertVariant::Gitlab(v) => v.assignee.as_ref().map(|u| u.username.clone()),
+            _ => None,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_assign_routes_to_owning_provider() {
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let poller = Poller {
+            last_poll_time: None,
+            providers: vec![
+                Box::new(MockProvider::new(1, false, calls)),
+                Box::new(AssigningProvider {
+                    iid: "2".to_string(),
+                }),
+                Box::new(AssigningProvider {
+                    iid: "1".to_string(),
+                }),
+            ],
+            cached_alerts: Vec::new(),
+        };
+        let variant = gitlab_alert("1", &[]).variants.remove(0);
+
+        let updated = poller.assign_to_me(&variant).await.unwrap();
+
+        assert_eq!(assignee_username(&updated).as_deref(), Some("me"));
+    }
+
+    #[tokio::test]
+    async fn test_assign_without_owning_provider_fails() {
+        let poller = Poller {
+            last_poll_time: None,
+            providers: vec![Box::new(AssigningProvider {
+                iid: "2".to_string(),
+            })],
+            cached_alerts: Vec::new(),
+        };
+        let variant = gitlab_alert("1", &[]).variants.remove(0);
+
+        assert!(poller.assign_to_me(&variant).await.is_err());
+    }
+
+    #[test]
+    fn test_update_variant_updates_every_copy() {
+        // One GitLab alert grouping two Grafana alerts is merged into both.
+        let mut poller = Poller {
+            last_poll_time: None,
+            providers: vec![],
+            cached_alerts: merge_alerts(vec![
+                grafana_alert("aaa"),
+                grafana_alert("bbb"),
+                gitlab_alert("1", &["aaa", "bbb"]),
+            ]),
+        };
+        let old = gitlab_alert("1", &["aaa", "bbb"]).variants.remove(0);
+        let AlertVariant::Gitlab(mut new) = old.clone() else {
+            unreachable!()
+        };
+        new.assignee = Some(GitlabUser {
+            name: "Me".to_string(),
+            username: "me".to_string(),
+            avatar_url: None,
+        });
+
+        poller.update_variant(&old, AlertVariant::Gitlab(new));
+
+        let assigned: Vec<Option<String>> = poller
+            .alerts()
+            .iter()
+            .map(|alert| assignee_username(&alert.variants[1]))
+            .collect();
+        assert_eq!(assigned, vec![Some("me".to_string()); 2]);
     }
 }
