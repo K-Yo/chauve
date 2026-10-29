@@ -1,6 +1,6 @@
 [package]
 name = "chauve"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 
 [dependencies]
@@ -33,10 +33,17 @@ notify-rust = { version = "4", default-features = false, features = ["z"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 # Provides subtitle, per-severity sounds, and direct macOS Notification Center access.
 mac-notification-sys = "0.6"
+# Neither mac-notification-sys nor winrt-toast-reborn expose whether the OS
+# is actually allowing notifications through, so we query the native APIs
+# directly for that one check.
+objc2 = "0.6"
+objc2-user-notifications = "0.3"
+block2 = "0.6"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # Proper WinRT toast notifications: sound selection, duration, attribution text, app ID.
 winrt-toast-reborn = "0.3"
+windows = { version = "0.61", features = ["UI_Notifications"] }
 
 [features]
 default = ["desktop"]

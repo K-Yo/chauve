@@ -526,10 +526,11 @@ dependencies = [
 
 [[package]]
 name = "chauve"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "async-trait",
+ "block2",
  "chrono",
  "config",
  "dioxus",
@@ -540,6 +541,8 @@ dependencies = [
  "lazy_static",
  "mac-notification-sys",
  "notify-rust",
+ "objc2",
+ "objc2-user-notifications",
  "reqwest",
  "serde",
  "serde_json",
@@ -548,6 +551,7 @@ dependencies = [
  "toml 1.1.3+spec-1.1.0",
  "tracing",
  "url",
+ "windows 0.61.3",
  "winrt-toast-reborn",
 ]
 
@@ -3489,6 +3493,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc2-core-location"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca347214e24bc973fc025fd0d36ebb179ff30536ed1f80252706db19ee452009"
+dependencies = [
+ "objc2",
+ "objc2-foundation",
+]
+
+[[package]]
 name = "objc2-encode"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3525,6 +3539,19 @@ dependencies = [
  "bitflags 2.11.1",
  "objc2",
  "objc2-core-foundation",
+ "objc2-foundation",
+]
+
+[[package]]
+name = "objc2-user-notifications"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9df9128cbbfef73cda168416ccf7f837b62737d748333bfe9ab71c245d76613e"
+dependencies = [
+ "bitflags 2.11.1",
+ "block2",
+ "objc2",
+ "objc2-core-location",
  "objc2-foundation",
 ]
 
