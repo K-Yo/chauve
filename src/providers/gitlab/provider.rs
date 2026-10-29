@@ -7,6 +7,7 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Value, json};
+use std::sync::{Arc, RwLock};
 
 /// Open alerts of a project. GitLab has no REST endpoint listing alerts.
 ///
@@ -32,6 +33,8 @@ pub struct GitlabProvider {
     url: String,        // https://gitlab.com
     token: String,      // glpat-...
     project_id: String, // 12345
+    /// Username of the token's owner, resolved lazily on the first `alerts()` call.
+    current_user: Arc<RwLock<Option<String>>>,
 }
 
 impl GitlabProvider {
@@ -40,6 +43,7 @@ impl GitlabProvider {
             url: url.trim_end_matches('/').to_string(),
             token,
             project_id,
+            current_user: Arc::new(RwLock::new(None)),
         }
     }
 }
@@ -47,6 +51,12 @@ impl GitlabProvider {
 #[async_trait]
 impl Provider for GitlabProvider {
     async fn alerts(&self) -> Result<Vec<Alert>, ProviderError> {
+        if self.current_user.read().unwrap().is_none()
+            && let Ok(username) = self.current_username().await
+        {
+            *self.current_user.write().unwrap() = Some(username);
+        }
+
         let generic_alerts = self
             .pull()
             .await?
@@ -100,6 +110,10 @@ impl Provider for GitlabProvider {
             alert.assignees.nodes.first().map(GitlabUser::from)
         });
         Ok(Some(AlertVariant::Gitlab(updated)))
+    }
+
+    fn current_user(&self) -> Option<String> {
+        self.current_user.read().unwrap().clone()
     }
 
     fn clone_box(&self) -> Box<dyn Provider> {

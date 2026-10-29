@@ -49,6 +49,55 @@ impl Alert {
             .min()
             .unwrap_or(u8::MAX)
     }
+
+    /// Username of the GitLab assignee, if any variant has one. Alerts with
+    /// no GitLab variant (e.g. Grafana-only) are always unassigned.
+    pub fn assignee_username(&self) -> Option<&str> {
+        self.variants.iter().find_map(|v| match v {
+            AlertVariant::Gitlab(g) => g.assignee.as_ref().map(|u| u.username.as_str()),
+            _ => None,
+        })
+    }
+}
+
+/// Which alerts to show in the list, cycled by the header toggle button.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum AlertFilter {
+    #[default]
+    All,
+    Unassigned,
+    Mine,
+}
+
+impl AlertFilter {
+    pub fn next(self) -> Self {
+        match self {
+            AlertFilter::All => AlertFilter::Unassigned,
+            AlertFilter::Unassigned => AlertFilter::Mine,
+            AlertFilter::Mine => AlertFilter::All,
+        }
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            AlertFilter::All => "All",
+            AlertFilter::Unassigned => "Unassigned",
+            AlertFilter::Mine => "Mine",
+        }
+    }
+
+    /// Whether `alert` should be shown under this filter. `current_usernames`
+    /// are the resolved usernames of the accounts providers are authenticated
+    /// as (one per GitLab provider).
+    pub fn matches(self, alert: &Alert, current_usernames: &[String]) -> bool {
+        match self {
+            AlertFilter::All => true,
+            AlertFilter::Unassigned => alert.assignee_username().is_none(),
+            AlertFilter::Mine => alert
+                .assignee_username()
+                .is_some_and(|username| current_usernames.iter().any(|u| u == username)),
+        }
+    }
 }
 
 /// What a single provider knows about an alert.

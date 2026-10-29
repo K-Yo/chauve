@@ -1,4 +1,4 @@
-use crate::entities::alert::Alert;
+use crate::entities::alert::{Alert, AlertFilter};
 use crate::entities::settings::Settings;
 use crate::poller::Poller;
 use crate::settings::get_settings;
@@ -6,7 +6,11 @@ use dioxus::prelude::*;
 
 /// Always-visible actions in the top-right corner.
 #[component]
-fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
+fn HeaderActions(
+    on_settings_toggle: EventHandler,
+    filter: AlertFilter,
+    on_filter_toggle: EventHandler,
+) -> Element {
     let mut poller_signal: Signal<Poller> = use_context();
     let mut settings_signal: Signal<Settings> = use_context();
 
@@ -32,6 +36,12 @@ fn HeaderActions(on_settings_toggle: EventHandler) -> Element {
                 id: "update",
                 class: "bg-orange-500 hover:bg-orange-700 text-black py-2 px-4 rounded",
                 "Update!"
+            }
+            button {
+                onclick: move |_| on_filter_toggle.call(()),
+                id: "filter",
+                class: "bg-orange-500 hover:bg-orange-700 text-black py-2 px-4 rounded",
+                "{filter.label()}"
             }
             button {
                 onclick: move |_| on_settings_toggle.call(()),
@@ -60,6 +70,8 @@ pub fn Header(
     is_pinned: bool,
     unpin: EventHandler,
     on_settings_toggle: EventHandler,
+    filter: AlertFilter,
+    on_filter_toggle: EventHandler,
 ) -> Element {
     rsx! {
         div { class: "fixed top-0 right-0 left-0 h-12 flex",
@@ -74,7 +86,7 @@ pub fn Header(
                     },
                 }
             }
-            HeaderActions { on_settings_toggle }
+            HeaderActions { on_settings_toggle, filter, on_filter_toggle }
         }
     }
 }

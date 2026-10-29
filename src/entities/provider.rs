@@ -62,6 +62,13 @@ pub trait Provider: Send + Sync {
         Ok(None)
     }
 
+    /// Username of the account this provider is authenticated as, if known.
+    /// Resolved as a side effect of `alerts()`; `None` until then or if the
+    /// provider has no such concept.
+    fn current_user(&self) -> Option<String> {
+        None
+    }
+
     // needed to make it clonable in a box
     fn clone_box(&self) -> Box<dyn Provider>;
 }

@@ -1,6 +1,6 @@
 use super::alert::AlertList;
 use super::settings::SettingsView;
-use crate::entities::alert::severity_order;
+use crate::entities::alert::{AlertFilter, severity_order};
 use crate::entities::settings::Settings;
 use crate::notifications;
 use crate::poller::Poller;
@@ -77,8 +77,16 @@ pub fn AlertsApp() -> Element {
     let mut pinned_id: Signal<Option<String>> = use_signal(|| None);
     let mut hovered_id: Signal<Option<String>> = use_signal(|| None);
     let mut show_settings: Signal<bool> = use_signal(|| false);
+    let mut filter: Signal<AlertFilter> = use_signal(AlertFilter::default);
 
-    let alerts: Vec<crate::entities::alert::Alert> = poller_signal.read().clone().alerts();
+    let current_usernames = poller_signal.read().current_usernames();
+    let alerts: Vec<crate::entities::alert::Alert> = poller_signal
+        .read()
+        .clone()
+        .alerts()
+        .into_iter()
+        .filter(|alert| filter().matches(alert, &current_usernames))
+        .collect();
     let last_poll_time = poller_signal.read().clone().last_poll_time();
 
     let active_alert = {
@@ -96,6 +104,8 @@ pub fn AlertsApp() -> Element {
                 is_pinned: pinned_id().is_some(),
                 unpin: move |_| pinned_id.set(None),
                 on_settings_toggle: move |_| show_settings.set(!show_settings()),
+                filter: filter(),
+                on_filter_toggle: move |_| filter.set(filter().next()),
             }
             Footer { last_poll_time }
             if show_settings() {

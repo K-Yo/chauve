@@ -62,6 +62,9 @@ pub struct PollerData {
     pub alerts: Vec<Alert>,
     pub last_poll_time: DateTime<Utc>,
     pub stats: PollStats,
+    /// Usernames of the accounts providers are authenticated as, used to
+    /// filter alerts assigned to the current user.
+    pub current_usernames: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -69,6 +72,7 @@ pub struct Poller {
     last_poll_time: Option<DateTime<Utc>>,
     providers: Vec<Box<dyn Provider>>,
     cached_alerts: Vec<Alert>,
+    current_usernames: Vec<String>,
 }
 
 impl Poller {
@@ -103,6 +107,12 @@ impl Poller {
             }
         }
 
+        let current_usernames = self
+            .providers
+            .iter()
+            .filter_map(|p| p.current_user())
+            .collect();
+
         let data = PollerData {
             alerts: merge_alerts(all_alerts),
             last_poll_time: now,
@@ -112,6 +122,7 @@ impl Poller {
                 total_providers: total,
                 errors,
             },
+            current_usernames,
         };
 
         if data.stats.error_count > 0 {
@@ -124,6 +135,7 @@ impl Poller {
     pub fn update_with(&mut self, data: PollerData) {
         self.cached_alerts = data.alerts;
         self.last_poll_time = Some(data.last_poll_time);
+        self.current_usernames = data.current_usernames;
     }
 
     /// When the last successful poll happened, `None` until the first poll.
@@ -164,6 +176,12 @@ impl Poller {
             .for_each(|variant| *variant = new.clone());
     }
 
+    /// Usernames of the accounts providers are authenticated as, from the
+    /// last successful poll. Empty until resolved.
+    pub fn current_usernames(&self) -> Vec<String> {
+        self.current_usernames.clone()
+    }
+
     /// Swap the provider list for one built from new settings, keeping cached
     /// alerts and the last poll time so the UI keeps showing data until the
     /// next poll lands.
@@ -194,6 +212,7 @@ impl Poller {
             last_poll_time: None,
             providers: Self::build_providers(settings),
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         }
     }
 }
@@ -337,6 +356,7 @@ mod tests {
             last_poll_time: None,
             providers: vec![Box::new(provider)],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
 
         // When: polling the poller
@@ -370,6 +390,7 @@ mod tests {
                 Box::new(provider3),
             ],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
 
         // When: polling the poller
@@ -417,6 +438,7 @@ mod tests {
                 Box::new(provider3),
             ],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
 
         // When: polling the poller
@@ -447,6 +469,7 @@ mod tests {
             last_poll_time: None,
             providers: vec![],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
 
         // When: polling the poller
@@ -605,6 +628,7 @@ mod tests {
                 }),
             ],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
         let variant = gitlab_alert("1", &[]).variants.remove(0);
 
@@ -621,6 +645,7 @@ mod tests {
                 iid: "2".to_string(),
             })],
             cached_alerts: Vec::new(),
+            current_usernames: Vec::new(),
         };
         let variant = gitlab_alert("1", &[]).variants.remove(0);
 
@@ -638,6 +663,7 @@ mod tests {
                 grafana_alert("bbb"),
                 gitlab_alert("1", &["aaa", "bbb"]),
             ]),
+            current_usernames: Vec::new(),
         };
         let old = gitlab_alert("1", &["aaa", "bbb"]).variants.remove(0);
         let AlertVariant::Gitlab(mut new) = old.clone() else {
