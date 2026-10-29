@@ -1,12 +1,14 @@
 use super::alert::AlertList;
 use super::settings::SettingsView;
-use crate::entities::alert::severity_order;
+use crate::entities::alert::{AlertFilter, severity_order};
 use crate::entities::settings::Settings;
+use crate::notification_permission::{self, NotificationPermission};
 use crate::notifications;
 use crate::poller::Poller;
 use crate::settings::get_settings;
 use crate::ui::footer::Footer;
 use crate::ui::header::Header;
+use crate::ui::toast::Toast;
 use crate::ui::tray;
 use dioxus::desktop::muda::MenuItem;
 use dioxus::desktop::trayicon::TrayIcon;
@@ -77,8 +79,30 @@ pub fn AlertsApp() -> Element {
     let mut pinned_id: Signal<Option<String>> = use_signal(|| None);
     let mut hovered_id: Signal<Option<String>> = use_signal(|| None);
     let mut show_settings: Signal<bool> = use_signal(|| false);
+    let mut filter: Signal<AlertFilter> = use_signal(AlertFilter::default);
 
-    let alerts: Vec<crate::entities::alert::Alert> = poller_signal.read().clone().alerts();
+    // Checked once at startup, then again whenever the settings view opens —
+    // cheap, and catches the user having just flipped the OS setting.
+    let mut os_permission: Signal<NotificationPermission> =
+        use_signal(|| NotificationPermission::Unsupported);
+    use_effect(move || {
+        let _ = show_settings();
+        spawn(async move {
+            let result = tokio::task::spawn_blocking(notification_permission::check)
+                .await
+                .unwrap_or(NotificationPermission::Unsupported);
+            os_permission.set(result);
+        });
+    });
+
+    let current_usernames = poller_signal.read().current_usernames();
+    let alerts: Vec<crate::entities::alert::Alert> = poller_signal
+        .read()
+        .clone()
+        .alerts()
+        .into_iter()
+        .filter(|alert| filter().matches(alert, &current_usernames))
+        .collect();
     let last_poll_time = poller_signal.read().clone().last_poll_time();
 
     let active_alert = {
@@ -96,8 +120,21 @@ pub fn AlertsApp() -> Element {
                 is_pinned: pinned_id().is_some(),
                 unpin: move |_| pinned_id.set(None),
                 on_settings_toggle: move |_| show_settings.set(!show_settings()),
+                filter: filter(),
+                on_filter_toggle: move |_| filter.set(filter().next()),
             }
             Footer { last_poll_time }
+            if os_permission() == NotificationPermission::Disabled
+                && settings_signal.read().notifications.enabled
+            {
+                Toast {
+                    message: if cfg!(target_os = "windows") {
+                        "Desktop notifications are disabled in Windows Settings"
+                    } else {
+                        "Desktop notifications are disabled in System Settings"
+                    },
+                }
+            }
             if show_settings() {
                 SettingsView {}
             } else {
