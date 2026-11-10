@@ -77,6 +77,6 @@ token = "glsa_..."
 
 [[providers.gitlab]]
 url = "https://gitlab.com"  # optional, this is the default
-token = "glpat-..."         # read_api scope
+token = "glpat-..."         # read_api scope (api for "assign to me")
 project_id = "12345"
 ```

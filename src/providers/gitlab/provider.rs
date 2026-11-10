@@ -89,7 +89,10 @@ impl Provider for GitlabProvider {
                     "usernames": [username],
                 }),
             )
-            .await?
+            .await
+            // GitLab answers a token lacking the `api` scope with a generic
+            // "does not exist or you don't have permission" error.
+            .map_err(|e| anyhow!("{e} (assigning requires a GitLab token with the `api` scope)"))?
             .alert_set_assignees
             .ok_or_else(|| anyhow!("GitLab returned no result for the assignment"))?;
         if !payload.errors.is_empty() {
