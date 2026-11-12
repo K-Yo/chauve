@@ -86,7 +86,7 @@ token = "your-api-token"
 
 [[providers.gitlab]]
 url = "https://gitlab.com" # optional, defaults to https://gitlab.com
-token = "glpat-..."        # needs the read_api scope
+token = "glpat-..."        # read_api scope; api scope to use "assign to me"
 project_id = "12345"
 ```
 
