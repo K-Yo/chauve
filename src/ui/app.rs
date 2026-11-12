@@ -1,6 +1,6 @@
 use super::alert::AlertList;
 use super::settings::SettingsView;
-use crate::entities::alert::{AlertFilter, severity_order};
+use crate::entities::alert::{Alert, AlertFilter, severity_order};
 use crate::entities::settings::Settings;
 use crate::notification_permission::{self, NotificationPermission};
 use crate::notifications;
@@ -43,13 +43,15 @@ pub fn AlertsApp() -> Element {
                         let notif = settings_signal.read().notifications.clone();
                         if notif.enabled {
                             let threshold = severity_order(&notif.min_severity);
-                            for alert in data.alerts.iter() {
-                                if !seen_ids.contains(&alert.id)
-                                    && alert.severity.order() <= threshold
-                                {
-                                    notifications::send_notification(alert);
-                                }
-                            }
+                            let new_alerts: Vec<&Alert> = data
+                                .alerts
+                                .iter()
+                                .filter(|alert| {
+                                    !seen_ids.contains(&alert.id)
+                                        && alert.severity.order() <= threshold
+                                })
+                                .collect();
+                            notifications::send_notifications(&new_alerts);
                         }
                     }
                     first_poll = false;
